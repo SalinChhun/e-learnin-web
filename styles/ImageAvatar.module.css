@@ -1,0 +1,29 @@
+/* ImageAvatar.module.css */
+.container {
+    position: relative;
+}
+
+.image {
+    border-radius: 50%;
+    object-fit: cover;
+    transition: opacity 0.3s;
+}
+
+.loading {
+    opacity: 0;
+}
+
+.loaded {
+    opacity: 1;
+}
+
+.placeholder {
+    position: absolute;
+    top: 0;
+    left: 0;
+    background-color: #e5e5e5;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}

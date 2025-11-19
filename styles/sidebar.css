@@ -1,0 +1,65 @@
+/* Add these rules to your sidebar.css file */
+body.sidebar-collapsed .wl-sidebar {
+    min-width: 60px;
+    width: 60px;
+}
+
+body.sidebar-collapsed .wl-sidebar-menu-title {
+    display: none;
+}
+
+body.sidebar-collapsed .wl-sidebar-menu-badge {
+    display: none;
+}
+
+body.sidebar-collapsed .wl-sidebar .wl-badge-guide {
+    display: none;
+}
+
+body.sidebar-collapsed .wl-sidebar img[src="/assets/logo/obp-text-logo.svg"] {
+    display: none;
+}
+
+/* Show only icons when collapsed */
+body.sidebar-collapsed .wl-sidebar-menu {
+    padding-left: 0.7142857143rem;
+    padding-right: 0.7142857143rem;
+    justify-content: center;
+}
+
+/* Transition for smooth animation */
+.wl-sidebar {
+    transition: width 0.3s ease, min-width 0.3s ease;
+}
+
+/* Add these rules to your existing sidebar.css file */
+
+/* Ensure icons remain visible when collapsed */
+body.sidebar-collapsed .wl-sidebar-menu:before {
+    display: inline-block !important;
+    position: static !important;
+    margin: 0 auto !important;
+    transform: none !important;
+}
+
+/* Center the menu items when collapsed */
+body.sidebar-collapsed .wl-sidebar-menu {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 0.5714285714rem;
+}
+
+/* Adjust the width of menu items when collapsed */
+body.sidebar-collapsed .wl-sidebar-menu-container {
+    width: 100%;
+}
+
+/* Make sure the link takes the full width */
+body.sidebar-collapsed .wl-sidebar-menu-title {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+}
+
+

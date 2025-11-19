@@ -1,0 +1,94 @@
+.wl-position-relative {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.wl-input {
+    padding-right: 40px;
+    box-sizing: border-box;
+    height: 40px;
+    padding: 8px 12px;
+}
+
+.wl-icon-container {
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.cursor-pointer {
+    cursor: pointer;
+}
+
+.select-container {
+    width: 100%;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid #d4d4d4;
+    border-radius: 6px;
+    background-color: var(--Colors-NEUTRAL-WLDS-NTL-00, color(display-p3 1 1 1));
+    transition: box-shadow 0.2s, border-color 0.2s;
+}
+
+/* Active effect when select is focused */
+.select-container:focus-within {
+    border-color: #0920f4;
+    box-shadow: 0 0 0 3px rgba(178, 212, 255);
+}
+
+.select-box {
+    width: 100%;
+    border: none;
+    outline: none;
+    background: transparent;
+    box-shadow: none;
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+}
+
+.error-border {
+    border: 1px solid #bd1822 !important;
+    box-shadow: 0 0 0 3px rgba(255, 201, 204) !important;
+}
+
+.cus-drpw-con:hover {
+    background-color: transparent;
+}
+
+.cus-drpw:hover {
+    color: white;
+    background-color: #e5e5e5;
+}
+
+.cus-drpw.selected {
+    color: white;
+    background-color: #3665d0;
+}
+
+.upload-img-border-error {
+    box-shadow: red 0 0 0 1px !important;
+    color: red;
+}
+
+input[type=file], /* FF, IE7+, chrome (except button) */
+input[type=file]::-webkit-file-upload-button { /* chromes and blink button */
+    cursor: pointer;
+}
+
+[class="wl-tooltip"] {
+    width: max-content;
+    max-width: fit-content;
+}
+
+/* Hide scrollbar for webkit browsers */
+.hide-scrollbar::-webkit-scrollbar {
+    display: none;
+}
