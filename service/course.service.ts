@@ -2,7 +2,6 @@ import { http } from '@/utils/http';
 
 const ServiceId = {
     COURSES: '/api/wba/v1/courses',
-    COURSES_PUBLIC: '/api/wba/v1/courses/public',
     CATEGORIES: '/api/wba/v1/categories',
 }
 
@@ -20,8 +19,8 @@ interface Category {
     description: string;
 }
 
-const getPublicCourses = async (params?: GetPublicCoursesParams) => {
-    const result = await http.get(ServiceId.COURSES_PUBLIC, {
+const getCourses = async (params?: GetPublicCoursesParams) => {
+    const result = await http.get(ServiceId.COURSES, {
         params: { ...params }
     });
 
@@ -45,7 +44,7 @@ interface CreateCourseRequest {
     course_content: string;
     assignment_type: string;
     status: string;
-    user_ids: number[];
+    learners: number[];
 }
 
 const createCourse = async (data: CreateCourseRequest) => {
@@ -58,11 +57,17 @@ const getCourseById = async (courseId: string | number) => {
     return result.data?.data;
 }
 
+const updateCourse = async (courseId: string | number, data: CreateCourseRequest) => {
+    const result = await http.put(`${ServiceId.COURSES}/${courseId}`, data);
+    return result.data;
+}
+
 const courseService = {
-    getPublicCourses,
+    getCourses,
     getCategories,
     createCourse,
     getCourseById,
+    updateCourse,
 }
 
 export default courseService;

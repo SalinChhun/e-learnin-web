@@ -1,22 +1,26 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Spinner } from 'react-bootstrap'
-import { useRouter } from 'next/navigation'
+import { useRouter, useParams } from 'next/navigation'
 import BackButton from '@/components/shared/BackButton'
 import PageHeader from '@/components/ui/bar/PageHeader'
 import CategorySelect from '@/components/shared/CategorySelect'
 import RichTextEditor from '@/components/shared/RichTextEditor'
 import SelectAssignees from '@/components/shared/SelectAssignees'
 import SingleDatePicker from '@/components/shared/SingleDatePicker'
-import { useCreateCourse } from '@/lib/hook/use-course'
+import { useUpdateCourse, useCourseDetails } from '@/lib/hook/use-course'
 import { createCourseSchema, CreateCourseOutput } from '@/validators/course.schema'
+import dayjs from 'dayjs'
 
-export default function CreateCoursePage() {
+export default function EditCoursePage() {
     const router = useRouter()
-    const { mutation: createCourseMutation, isPending: isCreating } = useCreateCourse()
+    const params = useParams()
+    const courseId = params?.id as string
+    const { mutation: updateCourseMutation, isPending: isUpdating } = useUpdateCourse()
+    const { course, isLoading: isLoadingCourse, error: courseError } = useCourseDetails(courseId)
     const [actionType, setActionType] = useState<'draft' | 'publish' | null>(null)
     
     const {
@@ -25,6 +29,7 @@ export default function CreateCoursePage() {
         formState: { errors },
         setValue,
         watch,
+        reset,
     } = useForm<CreateCourseOutput>({
         resolver: zodResolver(createCourseSchema),
         mode: 'onChange',
@@ -43,6 +48,56 @@ export default function CreateCoursePage() {
             courseContent: ''
         },
     })
+    console.log('watch(\'selectedAssignees\')', watch('selectedAssignees'))
+    // Format duration from days and hours to string (e.g., "4 days" or "8 hours")
+    const formatDuration = (days: number, hours: number): string => {
+        if (days > 0 && hours > 0) {
+            return `${days} ${days === 1 ? 'day' : 'days'} ${hours} ${hours === 1 ? 'hour' : 'hours'}`
+        } else if (days > 0) {
+            return `${days} ${days === 1 ? 'day' : 'days'}`
+        } else if (hours > 0) {
+            return `${hours} ${hours === 1 ? 'hour' : 'hours'}`
+        }
+        return '4 days'
+    }
+
+    // Load course data into form when course is fetched
+    useEffect(() => {
+        if (course) {
+            const assignmentType = course.assignment_type === '01' ? 'Individual' : (course.assignment_type === '02' ? 'Team' : 'Individual')
+            const duration = formatDuration(course.estimated_days || 0, course.duration_hours || 0)
+            
+            // Format dates to YYYY-MM-DD format - handle different possible date field names
+            const startDate = course.start_date 
+                ? dayjs(course.start_date).format('YYYY-MM-DD') 
+                : (course.created_at ? dayjs(course.created_at).format('YYYY-MM-DD') : '')
+            const endDate = course.due_date 
+                ? dayjs(course.due_date).format('YYYY-MM-DD') 
+                : ''
+            
+            // Map learners to string array for selectedAssignees (handle both array and undefined)
+            // API returns learners array, not user_ids
+            const assignees = Array.isArray(course.learners) 
+                ? course.learners.map((id: number) => id.toString())
+                : []
+            reset({
+                courseTitle: course.title || '',
+                description: course.description || '',
+                instructions: (course as any).instructions || '',
+                category: course.category_id || 0,
+                duration: duration,
+                startDate: startDate,
+                endDate: endDate,
+                assignmentType: assignmentType,
+                selectedAssignees: assignees,
+                enableCertificate: (course as any).enable_certificate || false,
+                certificateTemplate: (course as any).certificate_template || 'Default Template',
+                courseContent: course.course_content || ''
+            })
+            console.log('course ->', course)
+            console.log('assignees ->', assignees)
+        }
+    }, [course, reset])
 
     const handleAssigneesChange = (assigneeIds: string[]) => {
         setValue('selectedAssignees', assigneeIds, { shouldValidate: true })
@@ -76,6 +131,8 @@ export default function CreateCoursePage() {
     }
 
     const onSubmit = (data: CreateCourseOutput, isDraft: boolean) => {
+        if (!courseId) return
+
         setActionType(isDraft ? 'draft' : 'publish')
 
         const { days, hours } = parseDuration(data.duration)
@@ -94,14 +151,14 @@ export default function CreateCoursePage() {
             estimated_days: days,
             due_date: data.endDate,
             is_public: !isDraft, // Draft is not public, published courses are public
-            image_url: '', // Can be added later if needed
+            image_url: course?.image_url || '', // Keep existing image_url
             course_content: data.courseContent || '',
             assignment_type: assignmentTypeCode,
             status: isDraft ? '1' : '2', // 1 = draft, 2 = published
             learners: learners
         }
 
-        createCourseMutation(courseData, {
+        updateCourseMutation(courseId, courseData, {
             isDraft,
             onSuccess: () => {
                 router.push('/admin-management')
@@ -114,6 +171,32 @@ export default function CreateCoursePage() {
 
     const handleSaveDraft = handleSubmit((data) => onSubmit(data, true))
     const handlePublish = handleSubmit((data) => onSubmit(data, false))
+    
+    // Check if course is a draft
+    const isDraft = course?.status === '1' || course?.status === 'Draft' || course?.status === 'draft'
+
+    // Show loading state while fetching course
+    if (isLoadingCourse) {
+        return (
+            <div style={{ padding: '24px', backgroundColor: '#F9FAFB', minHeight: '100vh', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+                <Spinner animation="border" />
+            </div>
+        )
+    }
+
+    // Show error state if course not found
+    if (courseError || !course) {
+        return (
+            <div style={{ padding: '24px', backgroundColor: '#F9FAFB', minHeight: '100vh' }}>
+                <BackButton title="Back to Admin Management" href="/admin-management" />
+                <div style={{ marginTop: '32px', textAlign: 'center', color: '#EF4444' }}>
+                    <p>Course not found or error loading course data.</p>
+                </div>
+            </div>
+        )
+    }
+
+    const isCreating = isUpdating
 
     return (
         <div style={{ padding: '24px', backgroundColor: '#F9FAFB', minHeight: '100vh' }}>
@@ -122,8 +205,8 @@ export default function CreateCoursePage() {
                 <BackButton title="Back to Admin Management" href="/admin-management" />
                 <div style={{ marginTop: '16px' }}>
                     <PageHeader 
-                        title="Create New Course"
-                        subtitle="Design a comprehensive learning course for your team."
+                        title="Edit Course"
+                        subtitle="Update course information and settings"
                     />
                 </div>
             </div>
@@ -491,72 +574,113 @@ export default function CreateCoursePage() {
                 gap: '12px',
                 marginTop: '32px'
             }}>
-                <button
-                    type="button"
-                    onClick={handleSaveDraft}
-                    disabled={isCreating}
-                    style={{
-                        padding: '12px 24px',
-                        backgroundColor: 'white',
-                        color: '#003D7A',
-                        border: '1px solid #003D7A',
-                        borderRadius: '8px',
-                        fontSize: '14px',
-                        fontWeight: '500',
-                        cursor: isCreating ? 'not-allowed' : 'pointer',
-                        transition: 'background-color 0.2s',
-                        opacity: isCreating ? 0.6 : 1,
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '8px'
-                    }}
-                    onMouseEnter={(e) => {
-                        if (!isCreating) {
-                            e.currentTarget.style.backgroundColor = '#F9FAFB'
-                        }
-                    }}
-                    onMouseLeave={(e) => {
-                        if (!isCreating) {
-                            e.currentTarget.style.backgroundColor = 'white'
-                        }
-                    }}
-                >
-                    {isCreating && actionType === 'draft' && <Spinner animation="border" size="sm" style={{ width: 14, height: 14 }} />}
-                    Save as Draft
-                </button>
-                <button
-                    type="button"
-                    onClick={handlePublish}
-                    disabled={isCreating}
-                    style={{
-                        padding: '12px 24px',
-                        backgroundColor: '#003D7A',
-                        color: 'white',
-                        border: 'none',
-                        borderRadius: '8px',
-                        fontSize: '14px',
-                        fontWeight: '500',
-                        cursor: isCreating ? 'not-allowed' : 'pointer',
-                        transition: 'background-color 0.2s',
-                        opacity: isCreating ? 0.6 : 1,
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '8px'
-                    }}
-                    onMouseEnter={(e) => {
-                        if (!isCreating) {
-                            e.currentTarget.style.backgroundColor = '#002855'
-                        }
-                    }}
-                    onMouseLeave={(e) => {
-                        if (!isCreating) {
-                            e.currentTarget.style.backgroundColor = '#003D7A'
-                        }
-                    }}
-                >
-                    {isCreating && actionType === 'publish' && <Spinner animation="border" size="sm" style={{ width: 14, height: 14 }} />}
-                    Publish Course
-                </button>
+                {/* For draft courses: Show both Update and Publish buttons */}
+                {isDraft && (
+                    <>
+                        <button
+                            type="button"
+                            onClick={handleSaveDraft}
+                            disabled={isCreating}
+                            style={{
+                                padding: '12px 24px',
+                                backgroundColor: 'white',
+                                color: '#003D7A',
+                                border: '1px solid #003D7A',
+                                borderRadius: '8px',
+                                fontSize: '14px',
+                                fontWeight: '500',
+                                cursor: isCreating ? 'not-allowed' : 'pointer',
+                                transition: 'background-color 0.2s',
+                                opacity: isCreating ? 0.6 : 1,
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '8px'
+                            }}
+                            onMouseEnter={(e) => {
+                                if (!isCreating) {
+                                    e.currentTarget.style.backgroundColor = '#F9FAFB'
+                                }
+                            }}
+                            onMouseLeave={(e) => {
+                                if (!isCreating) {
+                                    e.currentTarget.style.backgroundColor = 'white'
+                                }
+                            }}
+                        >
+                            {isCreating && actionType === 'draft' && <Spinner animation="border" size="sm" style={{ width: 14, height: 14 }} />}
+                            Update
+                        </button>
+                        <button
+                            type="button"
+                            onClick={handlePublish}
+                            disabled={isCreating}
+                            style={{
+                                padding: '12px 24px',
+                                backgroundColor: '#003D7A',
+                                color: 'white',
+                                border: 'none',
+                                borderRadius: '8px',
+                                fontSize: '14px',
+                                fontWeight: '500',
+                                cursor: isCreating ? 'not-allowed' : 'pointer',
+                                transition: 'background-color 0.2s',
+                                opacity: isCreating ? 0.6 : 1,
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '8px'
+                            }}
+                            onMouseEnter={(e) => {
+                                if (!isCreating) {
+                                    e.currentTarget.style.backgroundColor = '#002855'
+                                }
+                            }}
+                            onMouseLeave={(e) => {
+                                if (!isCreating) {
+                                    e.currentTarget.style.backgroundColor = '#003D7A'
+                                }
+                            }}
+                        >
+                            {isCreating && actionType === 'publish' && <Spinner animation="border" size="sm" style={{ width: 14, height: 14 }} />}
+                            Publish
+                        </button>
+                    </>
+                )}
+                {/* For published courses: Show only Update Course button */}
+                {!isDraft && (
+                    <button
+                        type="button"
+                        onClick={handlePublish}
+                        disabled={isCreating}
+                        style={{
+                            padding: '12px 24px',
+                            backgroundColor: '#003D7A',
+                            color: 'white',
+                            border: 'none',
+                            borderRadius: '8px',
+                            fontSize: '14px',
+                            fontWeight: '500',
+                            cursor: isCreating ? 'not-allowed' : 'pointer',
+                            transition: 'background-color 0.2s',
+                            opacity: isCreating ? 0.6 : 1,
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '8px'
+                        }}
+                        onMouseEnter={(e) => {
+                            if (!isCreating) {
+                                e.currentTarget.style.backgroundColor = '#002855'
+                            }
+                        }}
+                        onMouseLeave={(e) => {
+                            if (!isCreating) {
+                                e.currentTarget.style.backgroundColor = '#003D7A'
+                            }
+                        }}
+                    >
+                        {isCreating && actionType === 'publish' && <Spinner animation="border" size="sm" style={{ width: 14, height: 14 }} />}
+                        Update Course
+                    </button>
+                )}
             </div>
         </div>
     )

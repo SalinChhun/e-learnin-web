@@ -29,6 +29,11 @@ export async function middleware(req: NextRequest) {
             url.searchParams.set('error', 'RefreshTokenError');
             return NextResponse.redirect(url);
         }
+        
+        // Redirect authenticated users from root path to /courses
+        if (path === '/') {
+            return NextResponse.redirect(new URL('/courses', req.url));
+        }
     }
     
     return NextResponse.next();

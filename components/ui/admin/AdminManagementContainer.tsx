@@ -1,7 +1,11 @@
 'use client'
 
 import { useRouter } from 'next/navigation'
+import { Spinner } from 'react-bootstrap'
 import PageHeader from '@/components/ui/bar/PageHeader'
+import CourseCard from '@/components/ui/admin/CourseCard'
+import { useFetchAllCourses } from '@/lib/hook/use-course'
+import dayjs from 'dayjs'
 
 interface AdminManagementContainerProps {
     sessionData: any
@@ -17,13 +21,16 @@ interface Course {
 
 export default function AdminManagementContainer({ sessionData }: AdminManagementContainerProps) {
     const router = useRouter()
+    const { courses: apiCourses, isLoading, error } = useFetchAllCourses(3)
 
-    // Mock data for recent courses
-    const recentCourses: Course[] = [
-        { id: '1', title: 'Banking Fundamentals', date: 'Oct 1, 2025', learners: 45, status: 'Published' },
-        { id: '2', title: 'Risk Management', date: 'Oct 5, 2025', learners: 38, status: 'Published' },
-        { id: '3', title: 'Digital Transformation', date: 'Oct 20, 2025', learners: 0, status: 'Draft' }
-    ]
+    // Map API courses to component Course interface
+    const recentCourses: Course[] = apiCourses.map((course: any) => ({
+        id: course.id.toString(),
+        title: course.title,
+        date: course.created_at ? dayjs(course.created_at).format('MMM D, YYYY') : 'N/A',
+        learners: course.learner_count || 0,
+        status: course.status
+    }))
 
     return (
         <div style={{ padding: '24px', backgroundColor: '#F9FAFB', minHeight: '100vh' }}>
@@ -259,10 +266,7 @@ export default function AdminManagementContainer({ sessionData }: AdminManagemen
                     </h2>
                     <button
                         type="button"
-                        onClick={() => {
-                            // TODO: Navigate to all courses page
-                            console.log('View All')
-                        }}
+                        onClick={() => router.push('/admin-management/all-course')}
                         style={{
                             padding: '8px 16px',
                             backgroundColor: 'transparent',
@@ -286,80 +290,48 @@ export default function AdminManagementContainer({ sessionData }: AdminManagemen
                 </div>
 
                 {/* Course List */}
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
-                    {recentCourses.map((course, index) => (
-                        <div
-                            key={course.id}
-                            style={{
-                                display: 'flex',
-                                justifyContent: 'space-between',
-                                alignItems: 'center',
-                                padding: '16px 0',
-                                borderBottom: index < recentCourses.length - 1 ? '1px solid #E5E7EB' : 'none'
-                            }}
-                        >
-                            <div style={{ flex: 1 }}>
-                                <h3 style={{ 
-                                    fontSize: '16px', 
-                                    fontWeight: '500', 
-                                    color: '#1F2937', 
-                                    margin: '0 0 8px 0' 
-                                }}>
-                                    {course.title}
-                                </h3>
-                                <p style={{ 
-                                    fontSize: '14px', 
-                                    color: '#6B7280', 
-                                    margin: 0 
-                                }}>
-                                    {course.date} • {course.learners} learners
-                                </p>
-                            </div>
-                            <div style={{ 
-                                display: 'flex', 
-                                alignItems: 'center', 
-                                gap: '16px' 
-                            }}>
-                                <span style={{
-                                    padding: '4px 12px',
-                                    backgroundColor: course.status === 'Published' ? '#10B981' : '#9CA3AF',
-                                    color: 'white',
-                                    borderRadius: '16px',
-                                    fontSize: '12px',
-                                    fontWeight: '500'
-                                }}>
-                                    {course.status}
-                                </span>
-                                <button
-                                    type="button"
-                                    onClick={() => {
-                                        // TODO: Navigate to edit course page
-                                        console.log('Edit course', course.id)
-                                    }}
-                                    style={{
-                                        padding: '8px 16px',
-                                        backgroundColor: 'transparent',
-                                        color: '#003D7A',
-                                        border: '1px solid #003D7A',
-                                        borderRadius: '8px',
-                                        fontSize: '14px',
-                                        fontWeight: '500',
-                                        cursor: 'pointer',
-                                        transition: 'background-color 0.2s'
-                                    }}
-                                    onMouseEnter={(e) => {
-                                        e.currentTarget.style.backgroundColor = '#F0F9FF'
-                                    }}
-                                    onMouseLeave={(e) => {
-                                        e.currentTarget.style.backgroundColor = 'transparent'
-                                    }}
-                                >
-                                    Edit
-                                </button>
-                            </div>
-                        </div>
-                    ))}
-                </div>
+                {isLoading ? (
+                    <div style={{ 
+                        display: 'flex', 
+                        justifyContent: 'center', 
+                        alignItems: 'center', 
+                        padding: '40px' 
+                    }}>
+                        <Spinner animation="border" />
+                    </div>
+                ) : error ? (
+                    <div style={{ 
+                        padding: '24px', 
+                        textAlign: 'center', 
+                        color: '#EF4444' 
+                    }}>
+                        <p>Error loading courses. Please try again later.</p>
+                    </div>
+                ) : recentCourses.length === 0 ? (
+                    <div style={{ 
+                        padding: '24px', 
+                        textAlign: 'center', 
+                        color: '#6B7280' 
+                    }}>
+                        <p>No courses found. Create your first course to get started.</p>
+                    </div>
+                ) : (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                        {recentCourses.map((course) => (
+                            <CourseCard
+                                key={course.id}
+                                id={course.id}
+                                title={course.title}
+                                date={course.date}
+                                learners={course.learners}
+                                status={course.status}
+                                onEdit={(id) => {
+                                    router.push(`/admin-management/edit-course/${id}`)
+                                }}
+                            />
+                        ))}
+                    </div>
+                )}
             </div>
         </div>
     )

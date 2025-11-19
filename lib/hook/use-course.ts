@@ -51,13 +51,14 @@ const useFetchPublicCourses = () => {
         queryKey: ['public-courses', searchValue, categoryId, sortColumns],
         queryFn: ({ pageParam = 0 }) => {
             const requestParams = {
+                status: '2', // Only fetch published courses
                 page_number: pageParam as number,
                 page_size: +pageSize > 100 ? 100 : +pageSize,
                 search_value: searchValue || undefined,
                 category_id: categoryId || undefined,
                 sort_columns: sortColumns || undefined,
             };
-            return courseService.getPublicCourses(requestParams);
+            return courseService.getCourses(requestParams);
         },
         getNextPageParam: (lastPage: CourseResponse) => {
             if (!lastPage || !lastPage.hasNext) {
@@ -132,12 +133,59 @@ const useCreateCourse = () => {
                     toast.success(message);
                     queryClient.invalidateQueries({ queryKey: ["public-courses"] });
                     queryClient.invalidateQueries({ queryKey: ["courses"] });
+                    queryClient.invalidateQueries({ queryKey: ["all-courses"] });
+                    queryClient.invalidateQueries({ queryKey: ["all-courses-infinite"] });
                     options?.onSuccess?.(data);
                     // Optionally redirect to course list or course details
                     // router.push('/admin-management');
                 },
                 onError: (error: any) => {
                     toast.error(error?.response?.data?.message || error?.message || "Failed to create course");
+                    options?.onError?.(error);
+                },
+            });
+        },
+    };
+};
+
+/**
+ * Hook to update an existing course
+ */
+const useUpdateCourse = () => {
+    const queryClient = useQueryClient();
+    const router = useRouter();
+
+    const mutation = useMutation({
+        mutationFn: ({ courseId, data }: { courseId: string | number; data: CreateCourseRequest }) => 
+            courseService.updateCourse(courseId, data),
+    });
+
+    return {
+        ...mutation,
+        mutation: (
+            courseId: string | number,
+            variables: CreateCourseRequest,
+            options?: { 
+                onSuccess?: (data: any) => void;
+                onError?: (error: any) => void;
+                isDraft?: boolean;
+            }
+        ) => {
+            mutation.mutate({ courseId, data: variables }, {
+                onSuccess: (data) => {
+                    const message = options?.isDraft 
+                        ? "Course saved as draft successfully" 
+                        : "Course published successfully";
+                    toast.success(message);
+                    queryClient.invalidateQueries({ queryKey: ["public-courses"] });
+                    queryClient.invalidateQueries({ queryKey: ["courses"] });
+                    queryClient.invalidateQueries({ queryKey: ["all-courses"] });
+                    queryClient.invalidateQueries({ queryKey: ["all-courses-infinite"] });
+                    queryClient.invalidateQueries({ queryKey: ["course-details", courseId] });
+                    options?.onSuccess?.(data);
+                },
+                onError: (error: any) => {
+                    toast.error(error?.response?.data?.message || error?.message || "Failed to update course");
                     options?.onError?.(error);
                 },
             });
@@ -164,6 +212,84 @@ const useCourseDetails = (courseId: string | number | null | undefined) => {
     };
 };
 
+/**
+ * Hook to fetch all courses (for admin - includes both published and drafts)
+ */
+const useFetchAllCourses = (limit: number = 10) => {
+    const { data, isLoading, error, refetch } = useQuery({
+        queryKey: ['all-courses', limit],
+        queryFn: () => {
+            return courseService.getCourses({
+                page_number: 0,
+                page_size: limit,
+                sort_columns: 'created_at:desc', // Get most recent first
+            });
+        },
+        staleTime: 30 * 1000, // Cache for 30 seconds
+    });
+
+    const courses = useMemo(() => {
+        return data?.courses || [];
+    }, [data?.courses]);
+
+    return {
+        courses,
+        isLoading,
+        error: error as Error | null,
+        refetch,
+    };
+};
+
+/**
+ * Hook to fetch all courses with infinite scroll (for admin - includes both published and drafts)
+ */
+const useFetchAllCoursesInfinite = (pageSize: number = 10) => {
+    const {
+        data,
+        fetchNextPage,
+        hasNextPage,
+        isFetchingNextPage,
+        isLoading,
+        error,
+        refetch,
+    } = useInfiniteQuery({
+        queryKey: ['all-courses-infinite', pageSize],
+        queryFn: ({ pageParam = 0 }) => {
+            return courseService.getCourses({
+                page_number: pageParam as number,
+                page_size: pageSize,
+                sort_columns: 'created_at:desc', // Get most recent first
+            });
+        },
+        getNextPageParam: (lastPage: CourseResponse) => {
+            if (!lastPage || !lastPage.hasNext) {
+                return undefined;
+            }
+            return (lastPage.currentPage ?? 0) + 1;
+        },
+        initialPageParam: 0,
+        staleTime: 30 * 1000, // Cache for 30 seconds
+    });
+
+    const courses = useMemo(() => {
+        if (!data?.pages) return [];
+        return data.pages.flatMap((page: CourseResponse) => page?.courses || []);
+    }, [data?.pages]);
+
+    const totalElements = data?.pages?.[0]?.totalElements || 0;
+
+    return {
+        courses,
+        fetchNextPage,
+        hasNextPage: hasNextPage || false,
+        isFetchingNextPage,
+        isLoading,
+        error: error as Error | null,
+        totalElements,
+        refetch,
+    };
+};
+
 export default useFetchPublicCourses;
-export { useFetchCategories, useCreateCourse, useCourseDetails };
+export { useFetchCategories, useCreateCourse, useUpdateCourse, useCourseDetails, useFetchAllCourses, useFetchAllCoursesInfinite };
 

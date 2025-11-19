@@ -17,28 +17,96 @@ export default function SelectAssignees({
     placeholder = "Search users, teams, or departments...",
     label = "Select Assignees"
 }: SelectAssigneesProps) {
-    // Lazy fetch users on open
-    const [usersEnabled, setUsersEnabled] = useState(false);
+    // Separate state for dropdown visibility and user loading
+    const [dropdownOpen, setDropdownOpen] = useState(false);
+    // Enable user loading in background to fetch and match selected users, but don't show dropdown
+    const [usersEnabled, setUsersEnabled] = useState(value.length > 0);
     const usersQuery = useUsers(usersEnabled);
     const [selectedAssignees, setSelectedAssignees] = useState<InfiniteScrollItem[]>([]);
     const dropdownRef = useRef<HTMLDivElement>(null);
+    const hasSyncedRef = useRef(false);
+    const valueStringRef = useRef<string>('');
+
+    // Keep users enabled if we have value but haven't found all users yet (load in background)
+    useEffect(() => {
+        if (value.length > 0) {
+            setUsersEnabled(true);
+            // Check if we've found all selected users
+            const foundIds = selectedAssignees.map(a => 
+                a.value.id?.toString() || a.value.user_id?.toString() || a.id.toString()
+            );
+            const missingIds = value.filter(id => !foundIds.includes(id));
+            
+            // If we have missing users and there are more pages, fetch next page
+            // Use a small delay to avoid rapid fire requests
+            if (missingIds.length > 0 && usersQuery.hasNextPage && !usersQuery.isFetchingNextPage && !usersQuery.isLoading) {
+                const timeoutId = setTimeout(() => {
+                    usersQuery.fetchNextPage();
+                }, 100);
+                return () => clearTimeout(timeoutId);
+            }
+        }
+    }, [value.length, selectedAssignees.length, usersQuery.hasNextPage, usersQuery.isFetchingNextPage, usersQuery.isLoading, usersQuery.fetchNextPage]);
+
+    // Sync value prop with internal state when users are loaded
+    useEffect(() => {
+        const currentValueString = value.join(',');
+        
+        // Reset sync if value changed
+        if (valueStringRef.current !== currentValueString) {
+            hasSyncedRef.current = false;
+            valueStringRef.current = currentValueString;
+        }
+
+        if (value.length > 0 && usersQuery.items.length > 0) {
+            // Find users that match the value IDs
+            const matchedAssignees = usersQuery.items.filter((item: InfiniteScrollItem) => {
+                const itemId = item.value.id?.toString() || item.value.user_id?.toString() || item.id.toString();
+                return value.includes(itemId);
+            });
+            
+            // Update selected assignees, preserving existing ones and adding new matches
+            const existingIds = selectedAssignees.map(a => 
+                a.value.id?.toString() || a.value.user_id?.toString() || a.id.toString()
+            );
+            const newMatches = matchedAssignees.filter(a => {
+                const aId = a.value.id?.toString() || a.value.user_id?.toString() || a.id.toString();
+                return !existingIds.includes(aId);
+            });
+            
+            if (newMatches.length > 0 || !hasSyncedRef.current) {
+                // Combine existing and new matches, remove ones not in value
+                const allMatches = [...selectedAssignees, ...newMatches].filter(a => {
+                    const aId = a.value.id?.toString() || a.value.user_id?.toString() || a.id.toString();
+                    return value.includes(aId);
+                });
+                setSelectedAssignees(allMatches);
+                hasSyncedRef.current = true;
+            }
+        } else if (value.length === 0 && selectedAssignees.length > 0) {
+            // Clear selection if value is empty
+            setSelectedAssignees([]);
+            hasSyncedRef.current = false;
+            valueStringRef.current = '';
+        }
+    }, [value, usersQuery.items]);
 
     // Close dropdown when clicking outside
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
             if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-                setUsersEnabled(false);
+                setDropdownOpen(false);
             }
         };
 
-        if (usersEnabled) {
+        if (dropdownOpen) {
             document.addEventListener('mousedown', handleClickOutside);
         }
 
         return () => {
             document.removeEventListener('mousedown', handleClickOutside);
         };
-    }, [usersEnabled]);
+    }, [dropdownOpen]);
 
     const handleAssigneeToggle = (assignee: InfiniteScrollItem) => {
         const isSelected = selectedAssignees.some(a => a.id === assignee.id);
@@ -95,8 +163,12 @@ export default function SelectAssignees({
                     onChange={(e) => {
                         usersQuery.setSearchValue(e.target.value);
                         if (!usersEnabled) setUsersEnabled(true);
+                        if (!dropdownOpen) setDropdownOpen(true);
                     }}
-                    onFocus={() => setUsersEnabled(true)}
+                    onFocus={() => {
+                        if (!usersEnabled) setUsersEnabled(true);
+                        setDropdownOpen(true);
+                    }}
                     style={{
                         width: '100%',
                         height: '32px',
@@ -108,8 +180,8 @@ export default function SelectAssignees({
                         padding: '0 12px'
                     }}
                 />
-                {/* Dropdown menu */}
-                {usersEnabled && (
+                {/* Dropdown menu - only show when dropdown is open */}
+                {dropdownOpen && usersEnabled && (
                     <div style={{
                         position: 'absolute',
                         top: '100%',
