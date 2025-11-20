@@ -6,6 +6,7 @@ import {signOut} from "next-auth/react"
 import Link from "next/link"
 import {usePathname} from "next/navigation"
 import {useEffect, useMemo} from "react"
+import usePermissions from "@/lib/hook/usePermissions"
 
 interface NavItem {
     name: string
@@ -17,13 +18,24 @@ interface NavItem {
 export default function Sidebar() {
 
     const pathname = usePathname()
+    const { isAdmin } = usePermissions()
 
-    const navigation: NavItem[] = useMemo(() => [
-        {name: "Public Courses", icon: "wl-users-menu", href: PathRoute.MY_COURSE, count: 0},
-        {name: "My Courses", icon: "wl-partners-menu", href: "/my-courses", count: 0},
-        {name: "Admin Management", icon: "wl-apis-menu", href: "/admin-management", count: 0},
-        {name: "User Management", icon: "api-icon", href: "/users", count: 0},
-    ], []);
+    const navigation: NavItem[] = useMemo(() => {
+        const baseNavigation: NavItem[] = [
+            {name: "Public Courses", icon: "wl-users-menu", href: PathRoute.MY_COURSE, count: 0},
+            {name: "My Courses", icon: "wl-partners-menu", href: "/my-courses", count: 0},
+        ]
+
+        // Only show Admin Management and User Management if user is admin
+        if (isAdmin) {
+            baseNavigation.push(
+                {name: "Admin Management", icon: "wl-apis-menu", href: "/admin-management", count: 0},
+                {name: "User Management", icon: "api-icon", href: "/users", count: 0}
+            )
+        }
+
+        return baseNavigation
+    }, [isAdmin]);
 
     return (
         <>

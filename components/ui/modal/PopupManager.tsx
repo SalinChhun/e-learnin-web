@@ -41,9 +41,6 @@ const UpdateAuthConfig = lazy(
 const AuthConfigDetails = lazy(
   () => import("@/components/ui/auth-config/AuthConfigDetails")
 );
-const CourseDetails = lazy(
-  () => import("@/components/ui/courses/CourseDetails")
-);
 
 // Loading fallback for when a popup is being loaded
 const PopupLoadingFallback = () => (
@@ -123,10 +120,6 @@ const PopupRenderer = ({
     case PopupTypeEnum.AUTH_CONFIG_ENABLED:
     case PopupTypeEnum.AUTH_CONFIG_DISABLE:
       return <ConfirmationPopup {...props} />;
-    // COURSE
-    case PopupTypeEnum.COURSE_DETAILS:
-      return <CourseDetails {...props} />;
-    case PopupTypeEnum.NONE:
     default:
       return null;
   }

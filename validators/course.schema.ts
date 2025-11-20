@@ -64,15 +64,33 @@ export const createCourseSchema = z.object({
     .default(false),
 
   certificateTemplate: z
-    .string()
+    .union([z.string(), z.number()])
     .optional()
-    .default('Default Template'),
+    .default(''),
 
   courseContent: z
     .string()
     .optional()
     .default(''),
-});
+}).refine(
+  (data) => {
+    // If enableCertificate is true, certificateTemplate must be provided
+    if (data.enableCertificate) {
+      const templateValue = data.certificateTemplate;
+      if (!templateValue) return false;
+      // Check if it's a valid number (either already a number or a string that can be parsed)
+      const numValue = typeof templateValue === 'number' 
+        ? templateValue 
+        : parseInt(String(templateValue), 10);
+      return !isNaN(numValue) && numValue > 0;
+    }
+    return true;
+  },
+  {
+    message: 'Certificate template is required when certificate is enabled',
+    path: ['certificateTemplate'],
+  }
+);
 
 export type CreateCourseInput = z.input<typeof createCourseSchema>;
 export type CreateCourseOutput = z.output<typeof createCourseSchema>;

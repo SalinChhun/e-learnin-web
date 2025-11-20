@@ -2,7 +2,8 @@ import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tansta
 import { useMemo } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { useRouter } from 'next/navigation';
-import courseService, { Category, CreateCourseRequest } from '@/service/course.service';
+import courseService, { Category, CreateCourseRequest, EnrollCourseRequest, EnrollmentStatus, CourseLearnersResponse, GetCourseLearnersParams, AddLearnersRequest } from '@/service/course.service';
+import certificateTemplateService, { CreateCertificateTemplateRequest } from '@/service/certificate-template.service';
 import toast from '@/utils/toastService';
 
 interface Course {
@@ -290,6 +291,423 @@ const useFetchAllCoursesInfinite = (pageSize: number = 10) => {
     };
 };
 
+/**
+ * Hook to fetch certificate templates
+ */
+const useFetchCertificateTemplates = (status?: string | number) => {
+    const { data, isLoading, error } = useQuery({
+        queryKey: ['certificate-templates', status],
+        queryFn: () => certificateTemplateService.getCertificateTemplates({
+            status: status, // 1=DRAFT, 2=ACTIVE, 9=DELETE, undefined=all
+            sort_columns: 'id:desc',
+            page_number: 0,
+            page_size: 100, // Get all templates
+        }),
+        staleTime: 5 * 60 * 1000, // Cache for 5 minutes
+    });
+
+    return {
+        templates: data?.templates || [],
+        summary: data?.summary || null,
+        isLoading,
+        error: error as Error | null,
+    };
+};
+
+/**
+ * Hook to fetch certificate templates with infinite scroll
+ */
+const useFetchCertificateTemplatesInfinite = (status?: string | number, pageSize: number = 10) => {
+    const {
+        data,
+        fetchNextPage,
+        hasNextPage,
+        isFetchingNextPage,
+        isLoading,
+        error,
+        refetch,
+    } = useInfiniteQuery({
+        queryKey: ['certificate-templates-infinite', status, pageSize],
+        queryFn: ({ pageParam = 0 }) => {
+            return certificateTemplateService.getCertificateTemplates({
+                status: status, // 1=DRAFT, 2=ACTIVE, 9=DELETE, undefined=all
+                sort_columns: 'id:desc',
+                page_number: pageParam as number,
+                page_size: pageSize,
+            });
+        },
+        getNextPageParam: (lastPage: any) => {
+            if (!lastPage || !lastPage.hasNext) {
+                return undefined;
+            }
+            return (lastPage.currentPage ?? 0) + 1;
+        },
+        initialPageParam: 0,
+        staleTime: 5 * 60 * 1000, // Cache for 5 minutes
+    });
+
+    const templates = useMemo(() => {
+        if (!data?.pages) return [];
+        return data.pages.flatMap((page: any) => page?.templates || []);
+    }, [data?.pages]);
+
+    const summary = data?.pages?.[0]?.summary || null;
+    const totalElements = data?.pages?.[0]?.totalElements || 0;
+
+    return {
+        templates,
+        summary,
+        fetchNextPage,
+        hasNextPage: hasNextPage || false,
+        isFetchingNextPage,
+        isLoading,
+        error: error as Error | null,
+        totalElements,
+        refetch,
+    };
+};
+
+/**
+ * Hook to create a new certificate template
+ */
+const useCreateCertificateTemplate = () => {
+    const queryClient = useQueryClient();
+
+    const mutation = useMutation({
+        mutationFn: (data: CreateCertificateTemplateRequest) => 
+            certificateTemplateService.createCertificateTemplate(data),
+    });
+
+    return {
+        ...mutation,
+        mutation: (
+            variables: CreateCertificateTemplateRequest,
+            options?: { 
+                onSuccess?: (data: any) => void;
+                onError?: (error: any) => void;
+            }
+        ) => {
+            mutation.mutate(variables, {
+                onSuccess: (data) => {
+                    toast.success("Certificate template created successfully");
+                    queryClient.invalidateQueries({ queryKey: ["certificate-templates"] });
+                    queryClient.invalidateQueries({ queryKey: ["certificate-templates-infinite"] });
+                    options?.onSuccess?.(data);
+                },
+                onError: (error: any) => {
+                    toast.error(error?.response?.data?.message || error?.message || "Failed to create certificate template");
+                    options?.onError?.(error);
+                },
+            });
+        },
+    };
+};
+
+/**
+ * Hook to update a certificate template
+ */
+const useUpdateCertificateTemplate = () => {
+    const queryClient = useQueryClient();
+
+    const mutation = useMutation({
+        mutationFn: ({ templateId, data }: { templateId: string | number; data: CreateCertificateTemplateRequest }) => 
+            certificateTemplateService.updateCertificateTemplate(templateId, data),
+    });
+
+    return {
+        ...mutation,
+        mutation: (
+            templateId: string | number,
+            variables: CreateCertificateTemplateRequest,
+            options?: { 
+                onSuccess?: (data: any) => void;
+                onError?: (error: any) => void;
+            }
+        ) => {
+            mutation.mutate({ templateId, data: variables }, {
+                onSuccess: (data) => {
+                    toast.success("Certificate template updated successfully");
+                    queryClient.invalidateQueries({ queryKey: ["certificate-templates"] });
+                    queryClient.invalidateQueries({ queryKey: ["certificate-templates-infinite"] });
+                    queryClient.invalidateQueries({ queryKey: ["certificate-template-details", templateId] });
+                    options?.onSuccess?.(data);
+                },
+                onError: (error: any) => {
+                    toast.error(error?.response?.data?.message || error?.message || "Failed to update certificate template");
+                    options?.onError?.(error);
+                },
+            });
+        },
+    };
+};
+
+/**
+ * Hook to delete a certificate template
+ */
+const useDeleteCertificateTemplate = () => {
+    const queryClient = useQueryClient();
+
+    const mutation = useMutation({
+        mutationFn: (templateId: string | number) => 
+            certificateTemplateService.deleteCertificateTemplate(templateId),
+    });
+
+    return {
+        ...mutation,
+        mutation: (
+            templateId: string | number,
+            options?: { 
+                onSuccess?: (data: any) => void;
+                onError?: (error: any) => void;
+            }
+        ) => {
+            mutation.mutate(templateId, {
+                onSuccess: (data) => {
+                    toast.success("Certificate template deleted successfully");
+                    queryClient.invalidateQueries({ queryKey: ["certificate-templates"] });
+                    queryClient.invalidateQueries({ queryKey: ["certificate-templates-infinite"] });
+                    options?.onSuccess?.(data);
+                },
+                onError: (error: any) => {
+                    toast.error(error?.response?.data?.message || error?.message || "Failed to delete certificate template");
+                    options?.onError?.(error);
+                },
+            });
+        },
+    };
+};
+
+/**
+ * Hook to fetch a single certificate template by ID
+ */
+const useCertificateTemplateDetails = (templateId: string | number | null | undefined) => {
+    const { data, isLoading, error, refetch } = useQuery({
+        queryKey: ['certificate-template-details', templateId],
+        queryFn: () => certificateTemplateService.getCertificateTemplateById(templateId!),
+        enabled: !!templateId,
+        staleTime: 0, // Always consider stale to ensure fresh data when modal opens
+    });
+
+    return {
+        template: data || null,
+        isLoading,
+        error: error as Error | null,
+        refetch,
+    };
+};
+
+/**
+ * Hook to enroll in a course
+ */
+const useEnrollCourse = () => {
+    const queryClient = useQueryClient();
+
+    const mutation = useMutation({
+        mutationFn: (data: EnrollCourseRequest) => courseService.enrollCourse(data),
+    });
+
+    return {
+        ...mutation,
+        mutation: (
+            variables: EnrollCourseRequest,
+            options?: { 
+                onSuccess?: (data: any) => void;
+                onError?: (error: any) => void;
+            }
+        ) => {
+            mutation.mutate(variables, {
+                onSuccess: (data) => {
+                    toast.success("Successfully enrolled in course");
+                    queryClient.invalidateQueries({ queryKey: ['course-details'] });
+                    queryClient.invalidateQueries({ queryKey: ['public-courses'] });
+                    queryClient.invalidateQueries({ queryKey: ['enrollment-status'] });
+                    options?.onSuccess?.(data);
+                },
+                onError: (error: any) => {
+                    toast.error(error?.response?.data?.message || error?.message || "Failed to enroll in course");
+                    options?.onError?.(error);
+                },
+            });
+        },
+    };
+};
+
+/**
+ * Hook to check enrollment status for a course
+ */
+const useCheckEnrollment = (courseId: string | number | null | undefined) => {
+    const { data, isLoading, error, refetch } = useQuery({
+        queryKey: ['enrollment-status', courseId],
+        queryFn: () => courseService.checkEnrollment(courseId!),
+        enabled: !!courseId,
+        staleTime: 30 * 1000, // Cache for 30 seconds
+    });
+
+    return {
+        enrollmentStatus: data || null,
+        isLoading,
+        error: error as Error | null,
+        refetch,
+    };
+};
+
+/**
+ * Hook to fetch learners for a course
+ */
+const useCourseLearners = (courseId: string | number | null | undefined, params?: GetCourseLearnersParams) => {
+    const { data, isLoading, error, refetch } = useQuery({
+        queryKey: ['course-learners', courseId, params],
+        queryFn: () => courseService.getCourseLearners(courseId!, params),
+        enabled: !!courseId,
+        staleTime: 30 * 1000, // Cache for 30 seconds
+    });
+
+    return {
+        learnersData: data || null,
+        isLoading,
+        error: error as Error | null,
+        refetch,
+    };
+};
+
+/**
+ * Hook to approve an enrollment
+ */
+const useApproveEnrollment = () => {
+    const queryClient = useQueryClient();
+
+    const mutation = useMutation({
+        mutationFn: (enrollmentId: string | number) => courseService.approveEnrollment(enrollmentId),
+    });
+
+    return {
+        ...mutation,
+        mutation: (
+            enrollmentId: string | number,
+            options?: { 
+                onSuccess?: (data: any) => void;
+                onError?: (error: any) => void;
+            }
+        ) => {
+            mutation.mutate(enrollmentId, {
+                onSuccess: (data) => {
+                    toast.success("Enrollment approved successfully");
+                    queryClient.invalidateQueries({ queryKey: ['course-learners'] });
+                    options?.onSuccess?.(data);
+                },
+                onError: (error: any) => {
+                    toast.error(error?.response?.data?.message || error?.message || "Failed to approve enrollment");
+                    options?.onError?.(error);
+                },
+            });
+        },
+    };
+};
+
+/**
+ * Hook to reject an enrollment
+ */
+const useRejectEnrollment = () => {
+    const queryClient = useQueryClient();
+
+    const mutation = useMutation({
+        mutationFn: (enrollmentId: string | number) => courseService.rejectEnrollment(enrollmentId),
+    });
+
+    return {
+        ...mutation,
+        mutation: (
+            enrollmentId: string | number,
+            options?: { 
+                onSuccess?: (data: any) => void;
+                onError?: (error: any) => void;
+            }
+        ) => {
+            mutation.mutate(enrollmentId, {
+                onSuccess: (data) => {
+                    toast.success("Enrollment rejected successfully");
+                    queryClient.invalidateQueries({ queryKey: ['course-learners'] });
+                    options?.onSuccess?.(data);
+                },
+                onError: (error: any) => {
+                    toast.error(error?.response?.data?.message || error?.message || "Failed to reject enrollment");
+                    options?.onError?.(error);
+                },
+            });
+        },
+    };
+};
+
+/**
+ * Hook to remove an enrollment
+ */
+const useRemoveEnrollment = () => {
+    const queryClient = useQueryClient();
+
+    const mutation = useMutation({
+        mutationFn: (enrollmentId: string | number) => courseService.removeEnrollment(enrollmentId),
+    });
+
+    return {
+        ...mutation,
+        mutation: (
+            enrollmentId: string | number,
+            options?: { 
+                onSuccess?: (data: any) => void;
+                onError?: (error: any) => void;
+            }
+        ) => {
+            mutation.mutate(enrollmentId, {
+                onSuccess: (data) => {
+                    toast.success("Enrollment removed successfully");
+                    queryClient.invalidateQueries({ queryKey: ['course-learners'] });
+                    options?.onSuccess?.(data);
+                },
+                onError: (error: any) => {
+                    toast.error(error?.response?.data?.message || error?.message || "Failed to remove enrollment");
+                    options?.onError?.(error);
+                },
+            });
+        },
+    };
+};
+
+/**
+ * Hook to add learners to a course
+ */
+const useAddLearners = () => {
+    const queryClient = useQueryClient();
+
+    const mutation = useMutation({
+        mutationFn: ({ courseId, data }: { courseId: string | number; data: AddLearnersRequest }) => 
+            courseService.addLearners(courseId, data),
+    });
+
+    return {
+        ...mutation,
+        mutation: (
+            courseId: string | number,
+            data: AddLearnersRequest,
+            options?: { 
+                onSuccess?: (data: any) => void;
+                onError?: (error: any) => void;
+            }
+        ) => {
+            mutation.mutate({ courseId, data }, {
+                onSuccess: (data) => {
+                    toast.success("Learners added successfully");
+                    queryClient.invalidateQueries({ queryKey: ['course-learners'] });
+                    options?.onSuccess?.(data);
+                },
+                onError: (error: any) => {
+                    toast.error(error?.response?.data?.message || error?.message || "Failed to add learners");
+                    options?.onError?.(error);
+                },
+            });
+        },
+    };
+};
+
 export default useFetchPublicCourses;
-export { useFetchCategories, useCreateCourse, useUpdateCourse, useCourseDetails, useFetchAllCourses, useFetchAllCoursesInfinite };
+export { useFetchCategories, useCreateCourse, useUpdateCourse, useCourseDetails, useFetchAllCourses, useFetchAllCoursesInfinite, useFetchCertificateTemplates, useFetchCertificateTemplatesInfinite, useCreateCertificateTemplate, useUpdateCertificateTemplate, useDeleteCertificateTemplate, useCertificateTemplateDetails, useEnrollCourse, useCheckEnrollment, useCourseLearners, useApproveEnrollment, useRejectEnrollment, useRemoveEnrollment, useAddLearners };
 

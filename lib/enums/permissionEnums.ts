@@ -4,10 +4,9 @@
  * Enum for user roles
  */
 export enum UserRole {
-    USER = 'USER',
     ADMIN = 'ADMIN',
     SUPER_ADMIN = 'SUPER_ADMIN',
-    PARTNER = 'PARTNER',
+    LEARNER = 'LEARNER',
 }
 
 /**
@@ -116,29 +115,6 @@ export const generatePermissions = (
     });
 
     return permissions;
-};
-
-/**
- * Role-based permission definitions
- */
-export const ROLE_PERMISSIONS: Record<UserRole, PermissionString[]> = {
-    [UserRole.USER]: [
-        createPermission(Resource.USER, Action.READ),
-    ],
-    [UserRole.ADMIN]: [
-        ...generatePermissions(
-            [Resource.USER, Resource.PARTNER],
-            [Action.READ, Action.CREATE, Action.UPDATE, Action.DELETE]
-        ),
-        createPermission(Resource.REPORT, Action.READ),
-        createPermission(Resource.SETTING, Action.READ),
-    ],
-    [UserRole.PARTNER]: [
-        createPermission(Resource.PARTNER, Action.READ),
-        createPermission(Resource.PRODUCT, Action.READ),
-        createPermission(Resource.PRODUCT, Action.CREATE),
-    ],
-    [UserRole.SUPER_ADMIN]: generateAllPermissions(),
 };
 
 /**

@@ -11,7 +11,7 @@ import CategorySelect from '@/components/shared/CategorySelect'
 import RichTextEditor from '@/components/shared/RichTextEditor'
 import SelectAssignees from '@/components/shared/SelectAssignees'
 import SingleDatePicker from '@/components/shared/SingleDatePicker'
-import { useUpdateCourse, useCourseDetails } from '@/lib/hook/use-course'
+import { useUpdateCourse, useCourseDetails, useFetchCertificateTemplates } from '@/lib/hook/use-course'
 import { createCourseSchema, CreateCourseOutput } from '@/validators/course.schema'
 import dayjs from 'dayjs'
 
@@ -21,6 +21,7 @@ export default function EditCoursePage() {
     const courseId = params?.id as string
     const { mutation: updateCourseMutation, isPending: isUpdating } = useUpdateCourse()
     const { course, isLoading: isLoadingCourse, error: courseError } = useCourseDetails(courseId)
+    const { templates: certificateTemplates, isLoading: isLoadingTemplates } = useFetchCertificateTemplates('2')
     const [actionType, setActionType] = useState<'draft' | 'publish' | null>(null)
     
     const {
@@ -44,11 +45,11 @@ export default function EditCoursePage() {
             assignmentType: 'Individual',
             selectedAssignees: [],
             enableCertificate: false,
-            certificateTemplate: 'Default Template',
+            certificateTemplate: '',
             courseContent: ''
         },
     })
-    console.log('watch(\'selectedAssignees\')', watch('selectedAssignees'))
+    
     // Format duration from days and hours to string (e.g., "4 days" or "8 hours")
     const formatDuration = (days: number, hours: number): string => {
         if (days > 0 && hours > 0) {
@@ -80,6 +81,14 @@ export default function EditCoursePage() {
             const assignees = Array.isArray(course.learners) 
                 ? course.learners.map((id: number) => id.toString())
                 : []
+            
+            // Get certificate template ID (could be number or string)
+            const certificateTemplateId = (course as any).certificate_template_id 
+                ? (typeof (course as any).certificate_template_id === 'number' 
+                    ? (course as any).certificate_template_id 
+                    : parseInt((course as any).certificate_template_id, 10))
+                : ''
+            
             reset({
                 courseTitle: course.title || '',
                 description: course.description || '',
@@ -91,11 +100,9 @@ export default function EditCoursePage() {
                 assignmentType: assignmentType,
                 selectedAssignees: assignees,
                 enableCertificate: (course as any).enable_certificate || false,
-                certificateTemplate: (course as any).certificate_template || 'Default Template',
+                certificateTemplate: certificateTemplateId,
                 courseContent: course.course_content || ''
             })
-            console.log('course ->', course)
-            console.log('assignees ->', assignees)
         }
     }, [course, reset])
 
@@ -143,6 +150,13 @@ export default function EditCoursePage() {
             ? (data.selectedAssignees || []).map(id => parseInt(id, 10)).filter(id => !isNaN(id))
             : []
 
+        // Parse certificate template ID
+        const certificateTemplateId = data.enableCertificate && data.certificateTemplate
+            ? (typeof data.certificateTemplate === 'number' 
+                ? data.certificateTemplate 
+                : parseInt(data.certificateTemplate, 10))
+            : undefined
+
         const courseData = {
             title: data.courseTitle,
             description: data.description,
@@ -155,7 +169,9 @@ export default function EditCoursePage() {
             course_content: data.courseContent || '',
             assignment_type: assignmentTypeCode,
             status: isDraft ? '1' : '2', // 1 = draft, 2 = published
-            learners: learners
+            learners: learners,
+            enable_certificate: data.enableCertificate || false,
+            certificate_template_id: certificateTemplateId && !isNaN(certificateTemplateId) ? certificateTemplateId : undefined
         }
 
         updateCourseMutation(courseId, courseData, {
@@ -527,7 +543,12 @@ export default function EditCoursePage() {
                         <input
                             type="checkbox"
                             {...register('enableCertificate')}
-                            style={{ width: '18px', height: '18px', cursor: 'pointer' }}
+                            style={{
+                                width: '18px',
+                                height: '18px',
+                                cursor: 'pointer',
+                                ...(watch('enableCertificate') && {backgroundColor: '#003D7A'})
+                            }}
                         />
                         <span style={{ fontSize: '14px', color: '#374151' }}>
                             Enable certificate upon course completion
@@ -545,23 +566,38 @@ export default function EditCoursePage() {
                             }}>
                                 Certificate Template
                             </label>
-                            <select
-                                {...register('certificateTemplate')}
-                                style={{
-                                    width: '100%',
-                                    padding: '12px 16px',
-                                    border: '1px solid #D1D5DB',
-                                    borderRadius: '8px',
-                                    fontSize: '14px',
-                                    outline: 'none',
-                                    backgroundColor: 'white',
-                                    boxSizing: 'border-box'
-                                }}
-                            >
-                                <option value="Default Template">Default Template</option>
-                                <option value="Professional Template">Professional Template</option>
-                                <option value="Custom Template">Custom Template</option>
-                            </select>
+                            {isLoadingTemplates ? (
+                                <div style={{ padding: '12px 16px', color: '#6B7280', fontSize: '14px' }}>
+                                    Loading templates...
+                                </div>
+                            ) : (
+                                <select
+                                    {...register('certificateTemplate')}
+                                    onChange={(e) => setValue('certificateTemplate', e.target.value ? parseInt(e.target.value, 10) : '', { shouldValidate: true })}
+                                    value={watch('certificateTemplate')?.toString() || ''}
+                                    style={{
+                                        width: '100%',
+                                        border: '1px solid #D1D5DB',
+                                        borderRadius: '8px',
+                                        fontSize: '14px',
+                                        outline: 'none',
+                                        backgroundColor: 'white',
+                                        boxSizing: 'border-box'
+                                    }}
+                                >
+                                    <option value="">Select a template</option>
+                                    {certificateTemplates.map((template) => (
+                                        <option key={template.id} value={template.id}>
+                                            {template.name}
+                                        </option>
+                                    ))}
+                                </select>
+                            )}
+                            {errors.certificateTemplate && (
+                                <span style={{ color: '#EF4444', fontSize: '12px', marginTop: '4px', display: 'block' }}>
+                                    {errors.certificateTemplate.message}
+                                </span>
+                            )}
                         </div>
                     )}
                 </div>

@@ -230,22 +230,22 @@ export default function PublicCoursesContainer() {
                             }}
                         >
                             {/* Enrolled Status Tag */}
-                            <span
-                                style={{
-                                    position: 'absolute',
-                                    top: '12px',
-                                    right: '12px',
-                                    padding: '4px 12px',
-                                    backgroundColor: '#60A5FA',
-                                    color: 'white',
-                                    borderRadius: '12px',
-                                    fontSize: '12px',
-                                    fontWeight: '500',
-                                    whiteSpace: 'nowrap'
-                                }}
-                            >
-                                Enrolled
-                            </span>
+                            {/*<span*/}
+                            {/*    style={{*/}
+                            {/*        position: 'absolute',*/}
+                            {/*        top: '12px',*/}
+                            {/*        right: '12px',*/}
+                            {/*        padding: '4px 12px',*/}
+                            {/*        backgroundColor: '#60A5FA',*/}
+                            {/*        color: 'white',*/}
+                            {/*        borderRadius: '12px',*/}
+                            {/*        fontSize: '12px',*/}
+                            {/*        fontWeight: '500',*/}
+                            {/*        whiteSpace: 'nowrap'*/}
+                            {/*    }}*/}
+                            {/*>*/}
+                            {/*    Enrolled*/}
+                            {/*</span>*/}
                             <svg
                                 width="72"
                                 height="72"

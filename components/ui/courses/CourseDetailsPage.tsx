@@ -5,6 +5,10 @@ import Image from "next/image";
 import BackButton from '@/components/shared/BackButton';
 import { useCourseDetails } from '@/lib/hook/use-course';
 import { Spinner } from 'react-bootstrap';
+import React, { useState } from "react";
+import CourseEnrollButton from './CourseEnrollButton';
+import CourseLearnersTab from './CourseLearnersTab';
+import usePermissions from "@/lib/hook/usePermissions";
 
 interface CourseDetailsPageProps {
     courseId?: string
@@ -13,8 +17,10 @@ interface CourseDetailsPageProps {
 export default function CourseDetailsPage({ courseId }: CourseDetailsPageProps) {
     const searchParams = useSearchParams()
     const courseIdFromParams = courseId || searchParams.get('id')
-    
+    const { userRole, UserRole, isAdmin } = usePermissions();
+    const isLearner = userRole === UserRole.LEARNER;
     const { course, isLoading, error } = useCourseDetails(courseIdFromParams)
+    const [activeTab, setActiveTab] = useState<'lessons' | 'learners'>('lessons')
 
     // Format date for display
     const formatDate = (dateString: string) => {
@@ -61,13 +67,9 @@ export default function CourseDetailsPage({ courseId }: CourseDetailsPageProps) 
             {/* Header Section */}
             <div className="d-flex justify-content-between align-items-center mb-4">
                 <BackButton title="Back to Courses" href="/courses" />
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#6B7280', fontSize: '14px' }}>
-                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                        <circle cx="8" cy="8" r="7" stroke="#6B7280" strokeWidth="1.5"/>
-                        <path d="M8 4V8L11 10" stroke="#6B7280" strokeWidth="1.5" strokeLinecap="round"/>
-                    </svg>
-                    <span>Time Spent 00:00:00</span>
-                </div>
+                {
+                    isLearner && <CourseEnrollButton courseId={courseIdFromParams} />
+                }
             </div>
 
             {/* Course Header Card */}
@@ -99,11 +101,15 @@ export default function CourseDetailsPage({ courseId }: CourseDetailsPageProps) 
                     {/* Graduation Cap Icon */}
                     <Image width={48} height={48} src="/icon/common/graduate-cap.png"
                            alt="Icon image"/>
-                    <span style={{ fontSize: '12px', fontWeight: '400', marginTop: '4px' }}>{course.duration_hours} hours</span>
+                    <span style={{
+                        fontSize: '12px',
+                        fontWeight: '400',
+                        marginTop: '4px'
+                    }}>{course.duration_hours} hours</span>
                 </div>
 
                 {/* Content Section */}
-                <div style={{ flex: 1, padding: '0 32px 0 32px', position: 'relative' }}>
+                <div style={{flex: 1, padding: '0 32px 0 32px', position: 'relative'}}>
                     <h1 style={{ fontSize: '16px', fontWeight: '400', color: '#1F2937', margin: '0 0 12px 0', lineHeight: '1.2' }}>
                         {course.title}
                     </h1>
@@ -144,18 +150,76 @@ export default function CourseDetailsPage({ courseId }: CourseDetailsPageProps) 
                 </div>
             </div>
 
-            {/* Final Assessment Section */}
-            <div
-                style={{
-                    backgroundColor: '#DBEAFE',
-                    borderRadius: '12px',
-                    padding: '20px',
+            {/* Tabs - Only show for ADMIN */}
+            {isAdmin && (
+                <div style={{ 
                     marginBottom: '24px',
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center'
-                }}
-            >
+                    display: 'inline-flex',
+                    backgroundColor: '#F3F4F6',
+                    borderRadius: '12px',
+                    padding: '4px',
+                    position: 'relative'
+                }}>
+                    <button
+                        type="button"
+                        onClick={() => setActiveTab('lessons')}
+                        style={{
+                            padding: '10px 24px',
+                            backgroundColor: activeTab === 'lessons' ? 'white' : 'transparent',
+                            color: '#1F2937',
+                            border: 'none',
+                            borderRadius: '8px',
+                            fontSize: '14px',
+                            fontWeight: '500',
+                            cursor: 'pointer',
+                            transition: 'all 0.2s',
+                            boxShadow: activeTab === 'lessons' ? '0 1px 2px rgba(0, 0, 0, 0.05)' : 'none',
+                            position: 'relative',
+                            zIndex: activeTab === 'lessons' ? 1 : 0
+                        }}
+                    >
+                        Lessons
+                    </button>
+                    <button
+                        type="button"
+                        onClick={() => setActiveTab('learners')}
+                        style={{
+                            padding: '10px 24px',
+                            backgroundColor: activeTab === 'learners' ? 'white' : 'transparent',
+                            color: '#1F2937',
+                            border: 'none',
+                            borderRadius: '8px',
+                            fontSize: '14px',
+                            fontWeight: '500',
+                            cursor: 'pointer',
+                            transition: 'all 0.2s',
+                            boxShadow: activeTab === 'learners' ? '0 1px 2px rgba(0, 0, 0, 0.05)' : 'none',
+                            position: 'relative',
+                            zIndex: activeTab === 'learners' ? 1 : 0
+                        }}
+                    >
+                        Learners
+                    </button>
+                </div>
+            )}
+
+            {/* Tab Content */}
+            {isAdmin && activeTab === 'learners' ? (
+                <CourseLearnersTab courseId={courseIdFromParams} />
+            ) : (
+                <>
+                    {/* Final Assessment Section */}
+                    <div
+                        style={{
+                            backgroundColor: '#DBEAFE',
+                            borderRadius: '12px',
+                            padding: '20px',
+                            marginBottom: '24px',
+                            display: 'flex',
+                            justifyContent: 'space-between',
+                            alignItems: 'center'
+                        }}
+                    >
                 <div style={{ display: 'flex', alignItems: 'center', gap: '16px', flex: 1 }}>
                     <div
                         style={{
@@ -465,7 +529,9 @@ export default function CourseDetailsPage({ courseId }: CourseDetailsPageProps) 
                         text-decoration: line-through;
                     }
                 `}</style>
-            </div>
+                    </div>
+                </>
+            )}
         </div>
     )
 }

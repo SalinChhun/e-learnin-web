@@ -45,6 +45,8 @@ interface CreateCourseRequest {
     assignment_type: string;
     status: string;
     learners: number[];
+    enable_certificate?: boolean;
+    certificate_template_id?: number;
 }
 
 const createCourse = async (data: CreateCourseRequest) => {
@@ -62,14 +64,108 @@ const updateCourse = async (courseId: string | number, data: CreateCourseRequest
     return result.data;
 }
 
+interface EnrollCourseRequest {
+    course_id: number;
+}
+
+const enrollCourse = async (data: EnrollCourseRequest) => {
+    const result = await http.post(`${ServiceId.COURSES}/enroll`, data);
+    return result.data;
+}
+
+interface EnrollmentStatus {
+    is_enrolled: boolean;
+    enrollment_id: number | null;
+    status: string;
+    progress_percentage: number;
+    time_spent_seconds: number;
+    enrolled_date: string | null;
+    completed_date: string | null;
+}
+
+const checkEnrollment = async (courseId: string | number) => {
+    const result = await http.get(`${ServiceId.COURSES}/${courseId}/enrollment/check`);
+    return result.data?.data as EnrollmentStatus;
+}
+
+interface GetCourseLearnersParams {
+    sort_columns?: string;
+    page_number?: number;
+    page_size?: number;
+}
+
+interface CourseLearner {
+    enrollment_id: number;
+    user_id: number;
+    name: string;
+    email: string;
+    department: string;
+    status: string;
+    progress_percentage: number;
+    enrolled_date: string;
+    completed_date: string | null;
+}
+
+interface CourseLearnersResponse {
+    learners: CourseLearner[];
+    totalPages: number;
+    pageSize: number;
+    hasPrevious: boolean;
+    hasNext: boolean;
+    completedCount: number;
+    currentPage: number;
+    totalLearners: number;
+    totalElements: number;
+    inProgressCount: number;
+    pendingCount: number;
+}
+
+const getCourseLearners = async (courseId: string | number, params?: GetCourseLearnersParams) => {
+    const result = await http.get(`${ServiceId.COURSES}/${courseId}/learners`, {
+        params: { ...params }
+    });
+    return result.data?.data as CourseLearnersResponse;
+}
+
+const approveEnrollment = async (enrollmentId: string | number) => {
+    const result = await http.patch(`/api/wba/v1/courses/enrollments/${enrollmentId}/approve`);
+    return result.data;
+}
+
+const rejectEnrollment = async (enrollmentId: string | number) => {
+    const result = await http.patch(`/api/wba/v1/courses/enrollments/${enrollmentId}/reject`);
+    return result.data;
+}
+
+const removeEnrollment = async (enrollmentId: string | number) => {
+    const result = await http.delete(`/api/wba/v1/courses/enrollments/${enrollmentId}`);
+    return result.data;
+}
+
+interface AddLearnersRequest {
+    course_id: number;
+    user_ids: number[];
+}
+
+const addLearners = async (courseId: string | number, data: AddLearnersRequest) => {
+    const result = await http.post(`/api/wba/v1/courses/${courseId}/enrollments`, data);
+    return result.data;
+}
+
 const courseService = {
     getCourses,
     getCategories,
     createCourse,
     getCourseById,
     updateCourse,
+    enrollCourse,
+    checkEnrollment,
+    getCourseLearners,
+    approveEnrollment,
+    rejectEnrollment,
+    removeEnrollment,
+    addLearners,
 }
 
 export default courseService;
-export type { Category, CreateCourseRequest };
-
+export type { Category, CreateCourseRequest, EnrollCourseRequest, EnrollmentStatus, CourseLearner, CourseLearnersResponse, GetCourseLearnersParams, AddLearnersRequest };

@@ -191,10 +191,7 @@ export default function AdminManagementContainer({ sessionData }: AdminManagemen
                     </div>
                     <button
                         type="button"
-                        onClick={() => {
-                            // TODO: Navigate to certificate templates page
-                            console.log('Create Certificate Template')
-                        }}
+                        onClick={() => router.push('/admin-management/certificate-templates')}
                         style={{
                             padding: '10px 20px',
                             backgroundColor: '#003D7A',

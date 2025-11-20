@@ -11,12 +11,13 @@ import CategorySelect from '@/components/shared/CategorySelect'
 import RichTextEditor from '@/components/shared/RichTextEditor'
 import SelectAssignees from '@/components/shared/SelectAssignees'
 import SingleDatePicker from '@/components/shared/SingleDatePicker'
-import { useCreateCourse } from '@/lib/hook/use-course'
+import { useCreateCourse, useFetchCertificateTemplates } from '@/lib/hook/use-course'
 import { createCourseSchema, CreateCourseOutput } from '@/validators/course.schema'
 
 export default function CreateCoursePage() {
     const router = useRouter()
     const { mutation: createCourseMutation, isPending: isCreating } = useCreateCourse()
+    const { templates: certificateTemplates, isLoading: isLoadingTemplates } = useFetchCertificateTemplates('2')
     const [actionType, setActionType] = useState<'draft' | 'publish' | null>(null)
     
     const {
@@ -39,7 +40,7 @@ export default function CreateCoursePage() {
             assignmentType: 'Individual',
             selectedAssignees: [],
             enableCertificate: false,
-            certificateTemplate: 'Default Template',
+            certificateTemplate: '',
             courseContent: ''
         },
     })
@@ -86,6 +87,13 @@ export default function CreateCoursePage() {
             ? (data.selectedAssignees || []).map(id => parseInt(id, 10)).filter(id => !isNaN(id))
             : []
 
+        // Parse certificate template ID
+        const certificateTemplateId = data.enableCertificate && data.certificateTemplate
+            ? (typeof data.certificateTemplate === 'number' 
+                ? data.certificateTemplate 
+                : parseInt(data.certificateTemplate, 10))
+            : undefined
+
         const courseData = {
             title: data.courseTitle,
             description: data.description,
@@ -98,7 +106,9 @@ export default function CreateCoursePage() {
             course_content: data.courseContent || '',
             assignment_type: assignmentTypeCode,
             status: isDraft ? '1' : '2', // 1 = draft, 2 = published
-            learners: learners
+            learners: learners,
+            enable_certificate: data.enableCertificate || false,
+            certificate_template_id: certificateTemplateId && !isNaN(certificateTemplateId) ? certificateTemplateId : undefined
         }
 
         createCourseMutation(courseData, {
@@ -444,7 +454,12 @@ export default function CreateCoursePage() {
                         <input
                             type="checkbox"
                             {...register('enableCertificate')}
-                            style={{ width: '18px', height: '18px', cursor: 'pointer' }}
+                            style={{
+                                width: '18px',
+                                height: '18px',
+                                cursor: 'pointer',
+                                ...(watch('enableCertificate') && {backgroundColor: '#003D7A'})
+                            }}
                         />
                         <span style={{ fontSize: '14px', color: '#374151' }}>
                             Enable certificate upon course completion
@@ -462,23 +477,38 @@ export default function CreateCoursePage() {
                             }}>
                                 Certificate Template
                             </label>
-                            <select
-                                {...register('certificateTemplate')}
-                                style={{
-                                    width: '100%',
-                                    padding: '12px 16px',
-                                    border: '1px solid #D1D5DB',
-                                    borderRadius: '8px',
-                                    fontSize: '14px',
-                                    outline: 'none',
-                                    backgroundColor: 'white',
-                                    boxSizing: 'border-box'
-                                }}
-                            >
-                                <option value="Default Template">Default Template</option>
-                                <option value="Professional Template">Professional Template</option>
-                                <option value="Custom Template">Custom Template</option>
-                            </select>
+                            {isLoadingTemplates ? (
+                                <div style={{ padding: '12px 16px', color: '#6B7280', fontSize: '14px' }}>
+                                    Loading templates...
+                                </div>
+                            ) : (
+                                <select
+                                    {...register('certificateTemplate')}
+                                    onChange={(e) => setValue('certificateTemplate', e.target.value ? parseInt(e.target.value, 10) : '', { shouldValidate: true })}
+                                    value={watch('certificateTemplate')?.toString() || ''}
+                                    style={{
+                                        width: '100%',
+                                        border: '1px solid #D1D5DB',
+                                        borderRadius: '8px',
+                                        fontSize: '14px',
+                                        outline: 'none',
+                                        backgroundColor: 'white',
+                                        boxSizing: 'border-box'
+                                    }}
+                                >
+                                    <option value="">Select a template</option>
+                                    {certificateTemplates.map((template) => (
+                                        <option key={template.id} value={template.id}>
+                                            {template.name}
+                                        </option>
+                                    ))}
+                                </select>
+                            )}
+                            {errors.certificateTemplate && (
+                                <span style={{ color: '#EF4444', fontSize: '12px', marginTop: '4px', display: 'block' }}>
+                                    {errors.certificateTemplate.message}
+                                </span>
+                            )}
                         </div>
                     )}
                 </div>

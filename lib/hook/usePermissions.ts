@@ -89,7 +89,6 @@ export const usePermissions = () => {
     const hasAnyPermission = (permissions: string[]) => {
         if (!isAuthenticated || !session?.user?.permissions) return false;
         if (isSuperAdmin) return true;
-
         return permissions.some(perm =>
             session.user.permissions!.includes(perm)
         );
@@ -108,6 +107,10 @@ export const usePermissions = () => {
 
     const isSuperAdminOrAdmin = useMemo(() => {
         return userRole === UserRole.SUPER_ADMIN || userRole === UserRole.ADMIN;
+    }, [userRole]);
+
+    const isAdmin = useMemo(() => {
+        return userRole === UserRole.ADMIN;
     }, [userRole]);
 
     return {
@@ -133,7 +136,8 @@ export const usePermissions = () => {
         userRoles,
         userPermissions,
         isSuperAdmin,
-        userId: session?.user?.id,
+        isAdmin,
+        userId: session?.user,
         isSuperAdminOrAdmin,
         // Constants
         UserRole,
