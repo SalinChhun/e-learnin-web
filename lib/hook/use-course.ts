@@ -498,6 +498,29 @@ const useCertificateTemplateDetails = (templateId: string | number | null | unde
 };
 
 /**
+ * Hook to fetch certificate template by course ID
+ */
+const useCertificateTemplateByCourse = (courseId: string | number | null | undefined) => {
+    const { data, isLoading, error, refetch } = useQuery({
+        queryKey: ['certificate-template-by-course', courseId],
+        queryFn: () => certificateTemplateService.getCertificateTemplateByCourseId(courseId!),
+        enabled: !!courseId,
+        staleTime: 0,
+    });
+
+    // Check if template exists - API returns hasTemplate: false when no template, or template object when exists
+    const hasTemplate = data && (data.hasTemplate !== false) && data.id
+
+    return {
+        templateData: data || null,
+        hasTemplate: !!hasTemplate,
+        isLoading,
+        error: error as Error | null,
+        refetch,
+    };
+};
+
+/**
  * Hook to enroll in a course
  */
 const useEnrollCourse = () => {
@@ -730,6 +753,25 @@ const useMyCourses = () => {
     };
 };
 
+/**
+ * Hook to fetch a single course from my courses by ID
+ */
+const useMyCourseById = (courseId: string | number | null | undefined) => {
+    const { data, isLoading, error, refetch } = useQuery({
+        queryKey: ['my-course', courseId],
+        queryFn: () => courseService.getMyCourseById(courseId!),
+        enabled: !!courseId,
+        staleTime: 0, // Always fetch fresh data
+    });
+
+    return {
+        course: data || null,
+        isLoading,
+        error: error as Error | null,
+        refetch,
+    };
+};
+
 export default useFetchPublicCourses;
-export { useFetchCategories, useCreateCourse, useUpdateCourse, useCourseDetails, useFetchAllCourses, useFetchAllCoursesInfinite, useFetchCertificateTemplates, useFetchCertificateTemplatesInfinite, useCreateCertificateTemplate, useUpdateCertificateTemplate, useDeleteCertificateTemplate, useCertificateTemplateDetails, useEnrollCourse, useCheckEnrollment, useCourseLearners, useApproveEnrollment, useRejectEnrollment, useRemoveEnrollment, useAddLearners, useMyCourses };
+export { useFetchCategories, useCreateCourse, useUpdateCourse, useCourseDetails, useFetchAllCourses, useFetchAllCoursesInfinite, useFetchCertificateTemplates, useFetchCertificateTemplatesInfinite, useCreateCertificateTemplate, useUpdateCertificateTemplate, useDeleteCertificateTemplate, useCertificateTemplateDetails, useCertificateTemplateByCourse, useEnrollCourse, useCheckEnrollment, useCourseLearners, useApproveEnrollment, useRejectEnrollment, useRemoveEnrollment, useAddLearners, useMyCourses, useMyCourseById };
 

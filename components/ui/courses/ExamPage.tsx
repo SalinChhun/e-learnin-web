@@ -374,7 +374,7 @@ export default function ExamPage({ courseId }: ExamPageProps) {
                         You have successfully completed the exam. You can now download your certificate.
                     </p>
                     <button
-                        onClick={() => router.push(`/my-courses/${courseIdFromParams}/learn`)}
+                        onClick={() => router.push(`/my-courses/${courseIdFromParams}/certificate`)}
                         style={{
                             padding: '12px 24px',
                             backgroundColor: '#003D7A',

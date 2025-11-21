@@ -88,12 +88,18 @@ const deleteCertificateTemplate = async (templateId: string | number) => {
     return result.data;
 }
 
+const getCertificateTemplateByCourseId = async (courseId: string | number) => {
+    const result = await http.get(`${ServiceId.CERTIFICATE_TEMPLATES}/course/${courseId}`);
+    return result.data?.data;
+}
+
 const certificateTemplateService = {
     getCertificateTemplates,
     getCertificateTemplateById,
     createCertificateTemplate,
     updateCertificateTemplate,
     deleteCertificateTemplate,
+    getCertificateTemplateByCourseId,
 }
 
 export default certificateTemplateService;

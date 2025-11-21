@@ -18,6 +18,7 @@ export default function CreateCoursePage() {
     const router = useRouter()
     const { mutation: createCourseMutation, isPending: isCreating } = useCreateCourse()
     const { templates: certificateTemplates, isLoading: isLoadingTemplates } = useFetchCertificateTemplates('2')
+    console.log('certificateTemplates', certificateTemplates)
     const [actionType, setActionType] = useState<'draft' | 'publish' | null>(null)
     
     const {

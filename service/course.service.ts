@@ -167,8 +167,10 @@ interface MyCourse {
     enrolled_date: string;
     completed_date: string | null;
     image_url: string;
-    total_score: number | null;
-    percentage_score: number | null;
+    total_score?: number | null;
+    percentage_score?: number | null;
+    course_content?: string;
+    exam_attempt_status?: string | null;
 }
 
 interface MyCoursesResponse {
@@ -185,6 +187,11 @@ const getMyCourses = async () => {
     return result.data?.data as MyCoursesResponse;
 }
 
+const getMyCourseById = async (courseId: string | number) => {
+    const result = await http.get(`${ServiceId.COURSES}/my-courses/${courseId}`);
+    return result.data?.data as MyCourse;
+}
+
 const courseService = {
     getCourses,
     getCategories,
@@ -199,6 +206,7 @@ const courseService = {
     removeEnrollment,
     addLearners,
     getMyCourses,
+    getMyCourseById,
 }
 
 export default courseService;

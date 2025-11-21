@@ -3,8 +3,7 @@
 import { useSearchParams } from 'next/navigation'
 import Image from "next/image";
 import BackButton from '@/components/shared/BackButton';
-import { useCourseDetails, useCheckEnrollment } from '@/lib/hook/use-course';
-import { useMyCourses } from '@/lib/hook/use-course';
+import { useMyCourseById } from '@/lib/hook/use-course';
 import { Spinner } from 'react-bootstrap';
 import React from "react";
 import CourseHeaderCard from '@/components/shared/CourseHeaderCard';
@@ -19,40 +18,28 @@ interface CourseLearningPageProps {
 export default function CourseLearningPage({ courseId }: CourseLearningPageProps) {
     const searchParams = useSearchParams()
     const courseIdFromParams = courseId || searchParams.get('id')
-    const { course, isLoading, error } = useCourseDetails(courseIdFromParams)
-    const { myCoursesData } = useMyCourses()
-    const { enrollmentStatus } = useCheckEnrollment(courseIdFromParams)
-    
-    // Find enrollment info from my courses
-    const enrollmentInfo = myCoursesData?.courses?.find(c => c.course_id.toString() === courseIdFromParams?.toString())
-
-    // Format date for display
-    const formatDate = (dateString: string) => {
-        if (!dateString) return 'N/A'
-        return dayjs(dateString).format('MMM D, YYYY')
-    }
+    const { course, isLoading, error } = useMyCourseById(courseIdFromParams)
 
     // Get progress percentage
     const getProgress = () => {
-        if (enrollmentInfo) {
-            const statusLower = enrollmentInfo.status.toLowerCase()
-            if (statusLower === 'pending request') return 0
-            if (statusLower === 'in progress') return enrollmentInfo.progress_percentage || 0
-            if (statusLower === 'completed') return 100
-        }
-        return enrollmentStatus?.progress_percentage || 0
+        if (!course) return 0
+        const statusLower = course.status.toLowerCase()
+        if (statusLower === 'pending request') return 0
+        if (statusLower === 'in progress') return course.progress_percentage || 0
+        if (statusLower === 'completed') return 100
+        return course.progress_percentage || 0
     }
 
     // Get status badge
     const getStatusBadge = () => {
-        if (!enrollmentInfo) return null
-        const statusLower = enrollmentInfo.status.toLowerCase()
+        if (!course) return null
+        const statusLower = course.status.toLowerCase()
         if (statusLower === 'completed') {
             return { bg: '#D1FAE5', text: '#065F46', label: 'Completed' }
         } else if (statusLower === 'in progress') {
             return { bg: '#DBEAFE', text: '#1E40AF', label: 'In Progress' }
         } else {
-            return { bg: '#FEF3C7', text: '#92400E', label: enrollmentInfo.status }
+            return { bg: '#FEF3C7', text: '#92400E', label: course.status }
         }
     }
 
@@ -91,7 +78,7 @@ export default function CourseLearningPage({ courseId }: CourseLearningPageProps
     return (
         <div style={{ padding: '24px', backgroundColor: '#F9FAFB', minHeight: '100vh', position: 'relative' }}>
             {/* Time Spent Counter - Top Right */}
-            <TimeSpentCounter initialSeconds={enrollmentInfo?.time_spent_seconds || 0} />
+            <TimeSpentCounter initialSeconds={course?.time_spent_seconds || 0} />
 
             {/* Header Section */}
             <div className="d-flex justify-content-between align-items-center mb-4">
@@ -106,13 +93,14 @@ export default function CourseLearningPage({ courseId }: CourseLearningPageProps
                 durationHours={course.duration_hours}
                 estimatedDays={course.estimated_days}
                 dueDate={course.due_date}
-                status={enrollmentInfo?.status}
+                status={course.status}
             />
 
             {/* Final Assessment Section */}
             <FinalAssessmentSection
-                status={enrollmentInfo?.status}
-                score={enrollmentInfo?.percentage_score}
+                status={course.status}
+                score={course.percentage_score}
+                examAttemptStatus={course.exam_attempt_status}
                 courseId={courseIdFromParams}
             />
 
@@ -230,7 +218,7 @@ export default function CourseLearningPage({ courseId }: CourseLearningPageProps
                 {course.course_content ? (
                     <div
                         className="ql-editor"
-                        dangerouslySetInnerHTML={{__html: course.course_content}}
+                        dangerouslySetInnerHTML={{__html: course?.course_content || ''}}
                         style={{
                             padding: '0 !important',
                             fontSize: '16px',
