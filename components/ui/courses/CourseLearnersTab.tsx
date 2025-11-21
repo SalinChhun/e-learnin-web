@@ -5,6 +5,7 @@ import { Spinner, Modal } from 'react-bootstrap'
 import { useCourseLearners, useApproveEnrollment, useRejectEnrollment, useRemoveEnrollment, useAddLearners } from '@/lib/hook/use-course'
 import Image from 'next/image'
 import SelectAssignees from '@/components/shared/SelectAssignees'
+import { getDisplayProgress } from '@/lib/utils/courseProgress'
 
 interface CourseLearnersTabProps {
     courseId: string | number | null | undefined
@@ -299,16 +300,7 @@ export default function CourseLearnersTab({ courseId }: CourseLearnersTabProps) 
                                             </td>
                                             <td style={{ padding: '16px', minWidth: '120px' }}>
                                                 {(() => {
-                                                    const statusLower = learner.status.toLowerCase()
-                                                    let displayProgress = learner.progress_percentage
-                                                    
-                                                    if (statusLower === 'pending request') {
-                                                        displayProgress = 0
-                                                    } else if (statusLower === 'completed') {
-                                                        displayProgress = 100
-                                                    }
-                                                    // For 'in progress', use the actual progress_percentage
-                                                    
+                                                    const displayProgress = getDisplayProgress(learner.status, learner.progress_percentage)
                                                     return (
                                                         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                                                             <div style={{

@@ -152,6 +152,39 @@ const addLearners = async (courseId: string | number, data: AddLearnersRequest) 
     return result.data;
 }
 
+interface MyCourse {
+    enrollment_id: number;
+    course_id: number;
+    title: string;
+    description: string;
+    category: string;
+    duration_hours: number;
+    estimated_days: number;
+    due_date: string;
+    status: string;
+    progress_percentage: number;
+    time_spent_seconds: number;
+    enrolled_date: string;
+    completed_date: string | null;
+    image_url: string;
+    total_score: number | null;
+    percentage_score: number | null;
+}
+
+interface MyCoursesResponse {
+    courses: MyCourse[];
+    total: number;
+    inProgress: number;
+    certificates: number;
+    totalCourses: number;
+    completed: number;
+}
+
+const getMyCourses = async () => {
+    const result = await http.get(`${ServiceId.COURSES}/my-courses`);
+    return result.data?.data as MyCoursesResponse;
+}
+
 const courseService = {
     getCourses,
     getCategories,
@@ -165,7 +198,8 @@ const courseService = {
     rejectEnrollment,
     removeEnrollment,
     addLearners,
+    getMyCourses,
 }
 
 export default courseService;
-export type { Category, CreateCourseRequest, EnrollCourseRequest, EnrollmentStatus, CourseLearner, CourseLearnersResponse, GetCourseLearnersParams, AddLearnersRequest };
+export type { Category, CreateCourseRequest, EnrollCourseRequest, EnrollmentStatus, CourseLearner, CourseLearnersResponse, GetCourseLearnersParams, AddLearnersRequest, MyCourse, MyCoursesResponse };

@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient, useInfiniteQuery } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
 import { useMemo } from 'react';
-import quizService, { CreateQuizRequest, CreateQuestionRequest, GetQuizzesParams } from '@/service/quiz.service';
+import quizService, { CreateQuizRequest, CreateQuestionRequest, GetQuizzesParams, SubmitQuizRequest } from '@/service/quiz.service';
 import toast from '@/utils/toastService';
 
 interface QuizResponse {
@@ -212,5 +212,100 @@ const useUpdateQuiz = () => {
     };
 };
 
-export { useCreateQuiz, useFetchQuizzes, useFetchAllQuizzesInfinite, useQuizDetails, useUpdateQuiz };
+/**
+ * Hook to fetch quiz by course ID
+ */
+const useQuizByCourse = (courseId: string | number | null | undefined) => {
+    const { data, isLoading, error, refetch } = useQuery({
+        queryKey: ['quiz-by-course', courseId],
+        queryFn: () => {
+            if (!courseId) {
+                throw new Error('Course ID is required');
+            }
+            return quizService.getQuizByCourseId(courseId);
+        },
+        enabled: !!courseId,
+        staleTime: 0, // Always fetch fresh data
+    });
+
+    const quiz = useMemo(() => {
+        if (!data || !Array.isArray(data) || data.length === 0) return null;
+        return data[0]; // Return first quiz for the course
+    }, [data]);
+
+    return {
+        quiz,
+        isLoading,
+        error: error as Error | null,
+        refetch,
+    };
+};
+
+/**
+ * Hook to start a quiz
+ */
+const useStartQuiz = () => {
+    const mutation = useMutation({
+        mutationFn: (quizId: string | number) => quizService.startQuiz(quizId),
+    });
+
+    return {
+        ...mutation,
+        startQuiz: (
+            quizId: string | number,
+            options?: {
+                onSuccess?: (data: any) => void;
+                onError?: (error: any) => void;
+            }
+        ) => {
+            mutation.mutate(quizId, {
+                onSuccess: (data) => {
+                    options?.onSuccess?.(data);
+                },
+                onError: (error: any) => {
+                    toast.error(error?.response?.data?.message || error?.message || "Failed to start quiz");
+                    options?.onError?.(error);
+                },
+            });
+        },
+    };
+};
+
+/**
+ * Hook to submit a quiz
+ */
+const useSubmitQuiz = () => {
+    const queryClient = useQueryClient();
+    const router = useRouter();
+
+    const mutation = useMutation({
+        mutationFn: (data: SubmitQuizRequest) => quizService.submitQuiz(data),
+    });
+
+    return {
+        ...mutation,
+        submitQuiz: (
+            data: SubmitQuizRequest,
+            options?: {
+                onSuccess?: (data: any) => void;
+                onError?: (error: any) => void;
+            }
+        ) => {
+            mutation.mutate(data, {
+                onSuccess: (response) => {
+                    const score = response?.data?.score || response?.data?.score_percentage;
+                    queryClient.invalidateQueries({ queryKey: ['quiz-by-course'] });
+                    queryClient.invalidateQueries({ queryKey: ['my-courses'] });
+                    options?.onSuccess?.(response);
+                },
+                onError: (error: any) => {
+                    toast.error(error?.response?.data?.message || error?.message || "Failed to submit quiz");
+                    options?.onError?.(error);
+                },
+            });
+        },
+    };
+};
+
+export { useCreateQuiz, useFetchQuizzes, useFetchAllQuizzesInfinite, useQuizDetails, useUpdateQuiz, useQuizByCourse, useStartQuiz, useSubmitQuiz };
 

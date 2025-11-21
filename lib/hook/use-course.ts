@@ -2,9 +2,10 @@ import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tansta
 import { useMemo } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { useRouter } from 'next/navigation';
-import courseService, { Category, CreateCourseRequest, EnrollCourseRequest, EnrollmentStatus, CourseLearnersResponse, GetCourseLearnersParams, AddLearnersRequest } from '@/service/course.service';
+import courseService, { Category, CreateCourseRequest, EnrollCourseRequest, EnrollmentStatus, CourseLearnersResponse, GetCourseLearnersParams, AddLearnersRequest, MyCoursesResponse } from '@/service/course.service';
 import certificateTemplateService, { CreateCertificateTemplateRequest } from '@/service/certificate-template.service';
 import toast from '@/utils/toastService';
+import {AxiosError} from "axios";
 
 interface Course {
     id: number;
@@ -593,6 +594,7 @@ const useApproveEnrollment = () => {
                 onSuccess: (data) => {
                     toast.success("Enrollment approved successfully");
                     queryClient.invalidateQueries({ queryKey: ['course-learners'] });
+                    queryClient.invalidateQueries({ queryKey: ['my-courses'] });
                     options?.onSuccess?.(data);
                 },
                 onError: (error: any) => {
@@ -627,6 +629,7 @@ const useRejectEnrollment = () => {
                 onSuccess: (data) => {
                     toast.success("Enrollment rejected successfully");
                     queryClient.invalidateQueries({ queryKey: ['course-learners'] });
+                    queryClient.invalidateQueries({ queryKey: ['my-courses'] });
                     options?.onSuccess?.(data);
                 },
                 onError: (error: any) => {
@@ -661,6 +664,7 @@ const useRemoveEnrollment = () => {
                 onSuccess: (data) => {
                     toast.success("Enrollment removed successfully");
                     queryClient.invalidateQueries({ queryKey: ['course-learners'] });
+                    queryClient.invalidateQueries({ queryKey: ['my-courses'] });
                     options?.onSuccess?.(data);
                 },
                 onError: (error: any) => {
@@ -708,6 +712,24 @@ const useAddLearners = () => {
     };
 };
 
+/**
+ * Hook to fetch my enrolled courses
+ */
+const useMyCourses = () => {
+    const { data, isLoading, error, refetch } = useQuery<MyCoursesResponse, AxiosError>({
+        queryKey: ['my-courses'],
+        queryFn: () => courseService.getMyCourses(),
+        staleTime: 30 * 1000, // Cache for 30 seconds
+    });
+
+    return {
+        myCoursesData: data || null,
+        isLoading,
+        error: error as Error | null,
+        refetch,
+    };
+};
+
 export default useFetchPublicCourses;
-export { useFetchCategories, useCreateCourse, useUpdateCourse, useCourseDetails, useFetchAllCourses, useFetchAllCoursesInfinite, useFetchCertificateTemplates, useFetchCertificateTemplatesInfinite, useCreateCertificateTemplate, useUpdateCertificateTemplate, useDeleteCertificateTemplate, useCertificateTemplateDetails, useEnrollCourse, useCheckEnrollment, useCourseLearners, useApproveEnrollment, useRejectEnrollment, useRemoveEnrollment, useAddLearners };
+export { useFetchCategories, useCreateCourse, useUpdateCourse, useCourseDetails, useFetchAllCourses, useFetchAllCoursesInfinite, useFetchCertificateTemplates, useFetchCertificateTemplatesInfinite, useCreateCertificateTemplate, useUpdateCertificateTemplate, useDeleteCertificateTemplate, useCertificateTemplateDetails, useEnrollCourse, useCheckEnrollment, useCourseLearners, useApproveEnrollment, useRejectEnrollment, useRemoveEnrollment, useAddLearners, useMyCourses };
 

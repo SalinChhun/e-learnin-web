@@ -89,15 +89,44 @@ const updateQuiz = async (quizId: string | number, data: UpdateQuizRequest) => {
     return result.data;
 }
 
+const getQuizByCourseId = async (courseId: string | number) => {
+    const result = await http.get(`${ServiceId.QUIZZES}/course/${courseId}`);
+    return result.data?.data;
+}
+
+const startQuiz = async (quizId: string | number) => {
+    const result = await http.post(`${ServiceId.QUIZZES}/${quizId}/start`);
+    return result.data;
+}
+
+interface QuizAnswer {
+    question_id: number;
+    selected_option_id?: number;
+    answer_text?: string;
+}
+
+interface SubmitQuizRequest {
+    quiz_id: number;
+    answers: QuizAnswer[];
+}
+
+const submitQuiz = async (data: SubmitQuizRequest) => {
+    const result = await http.post(`${ServiceId.QUIZZES}/submit`, data);
+    return result.data;
+}
+
 const quizService = {
     createQuiz,
     addQuestionToQuiz,
     getQuizzes,
     getQuizById,
     updateQuiz,
+    getQuizByCourseId,
+    startQuiz,
+    submitQuiz,
 }
 
-export type { GetQuizzesParams };
+export type { GetQuizzesParams, QuizAnswer, SubmitQuizRequest };
 
 export default quizService;
 
