@@ -8,3 +8,4 @@ export default async function CertificateRoute({
     return <CertificatePage courseId={params.id} />
 }
 
+

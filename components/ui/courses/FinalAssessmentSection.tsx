@@ -2,6 +2,7 @@
 
 import Image from 'next/image'
 import {useRouter} from 'next/navigation'
+import React from "react";
 
 interface FinalAssessmentSectionProps {
     status?: string
@@ -56,7 +57,7 @@ export default function FinalAssessmentSection({
                         width: '48px',
                         height: '48px',
                         backgroundColor: '#EF4444',
-                        borderRadius: '8px',
+                        borderRadius: '100%',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
@@ -114,8 +115,74 @@ export default function FinalAssessmentSection({
         )
     }
 
-    // Show completed status (green) - if status is completed, show green banner
-    if (isCompleted) {
+    if (examPassed) {
+        return (
+            <div
+                style={{
+                    backgroundColor: '#D1FAE5',
+                    borderRadius: '12px',
+                    padding: '20px',
+                    marginBottom: '24px',
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center'
+                }}
+            >
+                <div style={{display: 'flex', alignItems: 'center', gap: '16px', flex: 1}}>
+                    <div style={{
+                        width: '48px',
+                        height: '48px',
+                        backgroundColor: '#10B981',
+                        borderRadius: '100%',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        flexShrink: 0
+                    }}>
+                        <Image width={24} height={24} src="/icon/complete-exam.svg" alt="Icon image" unoptimized/>
+                    </div>
+                    <div>
+                        <h3 style={{fontSize: '16px', fontWeight: '400', color: '#1F2937', margin: '0 0 4px 0'}}>
+                            Exam Passed!
+                        </h3>
+                        <p style={{fontSize: '14px', color: '#6B7280', margin: 0, fontWeight: '400'}}>
+                            Congratulations! You scored {score !== undefined ? `${score}%` : '0%'}. You can now view your certificate.
+                        </p>
+                    </div>
+                </div>
+                <button
+                    type="button"
+                    onClick={handleViewCertificate}
+                    style={{
+                        padding: '12px 24px',
+                        backgroundColor: '#10B981',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '8px',
+                        fontSize: '14px',
+                        fontWeight: '500',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px',
+                        transition: 'background-color 0.2s',
+                        whiteSpace: 'nowrap'
+                    }}
+                    onMouseEnter={(e) => {
+                        e.currentTarget.style.backgroundColor = '#059669'
+                    }}
+                    onMouseLeave={(e) => {
+                        e.currentTarget.style.backgroundColor = '#10B981'
+                    }}
+                >
+                    <Image width={24} height={24} src="/icon/complete-exam.svg" alt="Icon image" unoptimized/>
+                    View Certificate
+                </button>
+            </div>
+        )
+    }
+
+    if (isInProgress) {
 
         // In Progress or no exam attempt yet - Show "Ready for Your Final Assessment?"
         return (

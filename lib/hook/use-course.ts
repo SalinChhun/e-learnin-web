@@ -542,7 +542,7 @@ const useEnrollCourse = () => {
             mutation.mutate(variables, {
                 onSuccess: (data) => {
                     toast.success("Successfully enrolled in course");
-                    queryClient.invalidateQueries({ queryKey: ['course-details'] });
+                    queryClient.invalidateQueries({ queryKey: ['my-course'] });
                     queryClient.invalidateQueries({ queryKey: ['public-courses'] });
                     queryClient.invalidateQueries({ queryKey: ['enrollment-status'] });
                     options?.onSuccess?.(data);

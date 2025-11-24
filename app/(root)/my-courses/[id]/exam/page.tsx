@@ -8,3 +8,4 @@ export default async function ExamRoute({
     return <ExamPage courseId={params.id} />
 }
 
+

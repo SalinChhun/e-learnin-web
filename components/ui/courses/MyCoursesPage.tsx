@@ -75,7 +75,14 @@ export default function MyCoursesPage() {
 
     if (isLoading) {
         return (
-            <div style={{ padding: '24px', backgroundColor: '#F9FAFB', minHeight: '100vh', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+            <div style={{ 
+                padding: '24px', 
+                backgroundColor: '#F9FAFB', 
+                height: '100vh',
+                display: 'flex', 
+                justifyContent: 'center', 
+                alignItems: 'center' 
+            }}>
                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '16px' }}>
                     <Spinner animation="border" />
                     <span style={{ color: '#6B7280' }}>Loading your courses...</span>
@@ -86,9 +93,15 @@ export default function MyCoursesPage() {
 
     if (error || !myCoursesData) {
         return (
-            <div style={{ padding: '24px', backgroundColor: '#F9FAFB', minHeight: '100vh' }}>
+            <div style={{ 
+                padding: '24px', 
+                backgroundColor: '#F9FAFB',
+                height: '100vh',
+                display: 'flex',
+                justifyContent: 'center',
+                alignItems: 'center'
+            }}>
                 <div style={{ 
-                    marginTop: '24px', 
                     padding: '40px', 
                     backgroundColor: 'white', 
                     borderRadius: '12px', 
@@ -104,9 +117,16 @@ export default function MyCoursesPage() {
     const { totalCourses, inProgress, completed, certificates } = myCoursesData
 
     return (
-        <div style={{ padding: '24px', backgroundColor: '#F9FAFB', minHeight: '100vh' }}>
+        <div style={{ 
+            padding: '24px', 
+            backgroundColor: '#F9FAFB', 
+            height: '100vh',
+            display: 'flex',
+            flexDirection: 'column',
+            overflow: 'hidden'
+        }}>
             {/* Header */}
-            <div style={{ marginBottom: '24px' }}>
+            <div style={{ marginBottom: '24px', flexShrink: 0 }}>
                 <PageHeader 
                     title="My Courses"
                     subtitle="Your enrolled courses and learning progress."
@@ -117,8 +137,9 @@ export default function MyCoursesPage() {
             <div style={{ 
                 display: 'grid', 
                 gridTemplateColumns: 'repeat(4, 1fr)', 
-                gap: '16px', 
-                marginBottom: '24px' 
+                gap: '16px',
+                marginBottom: '24px',
+                flexShrink: 0
             }}>
                 {/* Total Courses */}
                 <div style={{
@@ -250,29 +271,37 @@ export default function MyCoursesPage() {
             </div>
 
             {/* Tabs */}
-            <TabGroup
-                tabs={[
-                    { id: 'all', label: 'All Courses', badge: totalCourses },
-                    { id: 'in-progress', label: 'In Progress', badge: inProgress },
-                    { id: 'completed', label: 'Completed', badge: completed }
-                ]}
-                activeTab={activeTab}
-                onTabChange={(tabId) => setActiveTab(tabId as TabFilter)}
-            />
+            <div style={{ flexShrink: 0}}>
+                <TabGroup
+                    tabs={[
+                        { id: 'all', label: 'All Courses', badge: totalCourses },
+                        { id: 'in-progress', label: 'In Progress', badge: inProgress },
+                        { id: 'completed', label: 'Completed', badge: completed }
+                    ]}
+                    activeTab={activeTab}
+                    onTabChange={(tabId) => setActiveTab(tabId as TabFilter)}
+                />
+            </div>
 
-            {/* Course List */}
-            {filteredCourses.length === 0 ? (
-                <div style={{
-                    backgroundColor: 'white',
-                    borderRadius: '12px',
-                    padding: '40px',
-                    textAlign: 'center',
-                    color: '#9CA3AF'
-                }}>
-                    No courses found
-                </div>
-            ) : (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            {/* Course List - Scrollable */}
+            <div style={{ 
+                flex: 1, 
+                overflowY: 'auto', 
+                overflowX: 'hidden',
+                paddingRight: '8px'
+            }}>
+                {filteredCourses.length === 0 ? (
+                    <div style={{
+                        backgroundColor: 'white',
+                        borderRadius: '12px',
+                        padding: '40px',
+                        textAlign: 'center',
+                        color: '#9CA3AF'
+                    }}>
+                        No courses found
+                    </div>
+                ) : (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
                     {filteredCourses.map((course) => {
                         const statusBadge = getStatusBadge(course.status)
                         const progress = getProgressPercentage(course)
@@ -403,8 +432,9 @@ export default function MyCoursesPage() {
                             </div>
                         )
                     })}
-                </div>
-            )}
+                    </div>
+                )}
+            </div>
         </div>
     )
 }

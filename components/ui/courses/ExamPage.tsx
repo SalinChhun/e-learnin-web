@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import { Spinner } from 'react-bootstrap'
 import { useQuizByCourse, useStartQuiz, useSubmitQuiz } from '@/lib/hook/use-quiz'
 import Image from 'next/image'
+import BackButton from '@/components/shared/BackButton'
 
 interface ExamPageProps {
     courseId?: string
@@ -51,7 +52,7 @@ export default function ExamPage({ courseId }: ExamPageProps) {
                 answers: sortedQuestions.map((question) => ({
                     question_id: question.id,
                     selected_option_id: answers[question.id],
-                    answer_text: question.options?.find(opt => opt.id === answers[question.id])?.option_text || ''
+                    answer_text: question.options?.find((opt: any) => opt.id === answers[question.id])?.option_text || ''
                 }))
             }
 
@@ -120,7 +121,7 @@ export default function ExamPage({ courseId }: ExamPageProps) {
             answers: sortedQuestions.map((question) => ({
                 question_id: question.id,
                 selected_option_id: answers[question.id],
-                answer_text: question.options?.find(opt => opt.id === answers[question.id])?.option_text || ''
+                answer_text: question.options?.find((opt: any) => opt.id === answers[question.id])?.option_text || ''
             }))
         }
 
@@ -165,22 +166,9 @@ export default function ExamPage({ courseId }: ExamPageProps) {
     if (!quiz) {
         return (
             <div style={{ padding: '24px', backgroundColor: '#F9FAFB', minHeight: '100vh' }}>
-                <button
-                    onClick={() => router.push(`/my-courses/${courseIdFromParams}/learn`)}
-                    style={{
-                        background: 'none',
-                        border: 'none',
-                        color: '#003D7A',
-                        cursor: 'pointer',
-                        fontSize: '14px',
-                        marginBottom: '24px',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '8px'
-                    }}
-                >
-                    ← Exit Exam
-                </button>
+                <div style={{ marginBottom: '24px' }}>
+                    <BackButton title="Exit Exam" href={`/my-courses/${courseIdFromParams}/learn`} />
+                </div>
                 <div style={{
                     marginTop: '24px',
                     padding: '40px',
@@ -260,7 +248,7 @@ export default function ExamPage({ courseId }: ExamPageProps) {
                         <p style={{ fontSize: '16px', color: '#1F2937', margin: '0 0 32px 0' }}>
                             You need at least {passingScore}% to pass. Please review the course materials and try again.
                         </p>
-                        <div style={{ display: 'flex', gap: '12px', justifyContent: 'center' }}>
+                        <div style={{display: 'flex', gap: '12px', justifyContent: 'center'}}>
                             <button
                                 onClick={() => {
                                     // Reset exam state to retry
@@ -305,26 +293,16 @@ export default function ExamPage({ courseId }: ExamPageProps) {
                                 Retry Exam
                             </button>
                             <button
-                                onClick={() => router.push(`/my-courses/${courseIdFromParams}/learn`)}
                                 style={{
-                                    padding: '12px 24px',
+                                    padding: '0 20px 0 20px',
                                     backgroundColor: '#003D7A',
-                                    color: 'white',
-                                    border: 'none',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
                                     borderRadius: '8px',
-                                    fontSize: '14px',
-                                    fontWeight: '500',
-                                    cursor: 'pointer',
-                                    transition: 'background-color 0.2s'
-                                }}
-                                onMouseEnter={(e) => {
-                                    e.currentTarget.style.backgroundColor = '#002855'
-                                }}
-                                onMouseLeave={(e) => {
-                                    e.currentTarget.style.backgroundColor = '#003D7A'
                                 }}
                             >
-                                Back to Course
+                                <a style={{color: 'white'}} href={`/my-courses/${courseIdFromParams}/learn`}>Back to Course</a>
                             </button>
                         </div>
                     </div>
@@ -404,21 +382,7 @@ export default function ExamPage({ courseId }: ExamPageProps) {
         <div style={{ padding: '24px', backgroundColor: '#F9FAFB', minHeight: '100vh' }}>
             {/* Header */}
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
-                <button
-                    onClick={() => router.push(`/my-courses/${courseIdFromParams}/learn`)}
-                    style={{
-                        background: 'none',
-                        border: 'none',
-                        color: '#003D7A',
-                        cursor: 'pointer',
-                        fontSize: '14px',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '8px'
-                    }}
-                >
-                    ← Exit Exam
-                </button>
+                <BackButton title="Exit Exam" href={`/my-courses/${courseIdFromParams}/learn`} />
                 <div style={{
                     backgroundColor: '#DBEAFE',
                     borderRadius: '8px',
@@ -483,8 +447,8 @@ export default function ExamPage({ courseId }: ExamPageProps) {
                 {/* Options */}
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '32px' }}>
                     {currentQuestion?.options
-                        ?.sort((a, b) => a.order_sequence - b.order_sequence)
-                        .map((option) => {
+                        ?.sort((a: any, b: any) => a.order_sequence - b.order_sequence)
+                        .map((option: any) => {
                             const isSelected = answers[currentQuestion.id] === option.id
                             return (
                                 <div
