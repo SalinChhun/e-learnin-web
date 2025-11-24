@@ -546,6 +546,7 @@ const useEnrollCourse = () => {
                     queryClient.invalidateQueries({ queryKey: ['my-course'] });
                     queryClient.invalidateQueries({ queryKey: ['public-courses'] });
                     queryClient.invalidateQueries({ queryKey: ['enrollment-status'] });
+                    queryClient.invalidateQueries({ queryKey: ['all-enrollments'] });
                     options?.onSuccess?.(data);
                 },
                 onError: (error: any) => {
@@ -619,6 +620,7 @@ const useApproveEnrollment = () => {
                     toast.success("Enrollment approved successfully");
                     queryClient.invalidateQueries({ queryKey: ['course-learners'] });
                     queryClient.invalidateQueries({ queryKey: ['my-courses'] });
+                    queryClient.invalidateQueries({ queryKey: ['all-enrollments'] });
                     options?.onSuccess?.(data);
                 },
                 onError: (error: any) => {
@@ -654,6 +656,7 @@ const useRejectEnrollment = () => {
                     toast.success("Enrollment rejected successfully");
                     queryClient.invalidateQueries({ queryKey: ['course-learners'] });
                     queryClient.invalidateQueries({ queryKey: ['my-courses'] });
+                    queryClient.invalidateQueries({ queryKey: ['all-enrollments'] });
                     options?.onSuccess?.(data);
                 },
                 onError: (error: any) => {
@@ -689,6 +692,7 @@ const useRemoveEnrollment = () => {
                     toast.success("Enrollment removed successfully");
                     queryClient.invalidateQueries({ queryKey: ['course-learners'] });
                     queryClient.invalidateQueries({ queryKey: ['my-courses'] });
+                    queryClient.invalidateQueries({ queryKey: ['all-enrollments'] });
                     options?.onSuccess?.(data);
                 },
                 onError: (error: any) => {
@@ -697,6 +701,56 @@ const useRemoveEnrollment = () => {
                 },
             });
         },
+    };
+};
+
+/**
+ * Hook to fetch all enrollments with infinite scroll
+ */
+const useFetchAllEnrollmentsInfinite = (pageSize: number = 10) => {
+    const {
+        data,
+        fetchNextPage,
+        hasNextPage,
+        isFetchingNextPage,
+        isLoading,
+        error,
+        refetch,
+    } = useInfiniteQuery({
+        queryKey: ['all-enrollments', pageSize],
+        queryFn: ({ pageParam = 0 }) => {
+            return courseService.getAllEnrollments({
+                page_number: pageParam as number,
+                page_size: pageSize,
+                sort_columns: 'id:desc',
+            });
+        },
+        getNextPageParam: (lastPage) => {
+            if (!lastPage || !lastPage.hasNext) {
+                return undefined;
+            }
+            return (lastPage.currentPage ?? 0) + 1;
+        },
+        initialPageParam: 0,
+        staleTime: 30 * 1000, // Cache for 30 seconds
+    });
+
+    const enrollments = useMemo(() => {
+        if (!data?.pages) return [];
+        return data.pages.flatMap((page) => page?.enrollments || []);
+    }, [data?.pages]);
+
+    const totalElements = data?.pages?.[0]?.totalElements || 0;
+
+    return {
+        enrollments,
+        fetchNextPage,
+        hasNextPage: hasNextPage || false,
+        isFetchingNextPage,
+        isLoading,
+        error: error as Error | null,
+        totalElements,
+        refetch,
     };
 };
 
@@ -774,5 +828,5 @@ const useMyCourseById = (courseId: string | number | null | undefined) => {
 };
 
 export default useFetchPublicCourses;
-export { useFetchCategories, useCreateCourse, useUpdateCourse, useCourseDetails, useFetchAllCourses, useFetchAllCoursesInfinite, useFetchCertificateTemplates, useFetchCertificateTemplatesInfinite, useCreateCertificateTemplate, useUpdateCertificateTemplate, useDeleteCertificateTemplate, useCertificateTemplateDetails, useCertificateTemplateByCourse, useEnrollCourse, useCheckEnrollment, useCourseLearners, useApproveEnrollment, useRejectEnrollment, useRemoveEnrollment, useAddLearners, useMyCourses, useMyCourseById };
+export { useFetchCategories, useCreateCourse, useUpdateCourse, useCourseDetails, useFetchAllCourses, useFetchAllCoursesInfinite, useFetchCertificateTemplates, useFetchCertificateTemplatesInfinite, useCreateCertificateTemplate, useUpdateCertificateTemplate, useDeleteCertificateTemplate, useCertificateTemplateDetails, useCertificateTemplateByCourse, useEnrollCourse, useCheckEnrollment, useCourseLearners, useApproveEnrollment, useRejectEnrollment, useRemoveEnrollment, useAddLearners, useMyCourses, useMyCourseById, useFetchAllEnrollmentsInfinite };
 

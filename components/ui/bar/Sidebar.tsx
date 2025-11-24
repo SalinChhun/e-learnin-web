@@ -28,6 +28,7 @@ export default function Sidebar() {
             pathname.includes('/admin-management/all-course') ||
             pathname.includes('/admin-management/all-quiz') ||
             pathname.includes('/admin-management/certificate-templates') ||
+            pathname.includes('/admin-management/approval') ||
             pathname.includes('/admin-management/create-course') ||
             pathname.includes('/admin-management/edit-course') ||
             pathname.includes('/admin-management/create-quiz') ||
@@ -53,7 +54,8 @@ export default function Sidebar() {
                 subItems: [
                     {name: "All Course", href: "/admin-management/all-course", count: 0},
                     {name: "Quiz/Exam", href: "/admin-management/all-quiz", count: 0},
-                    {name: "Certificate Templates", href: "/admin-management/certificate-templates", count: 0}
+                    {name: "Certificate Templates", href: "/admin-management/certificate-templates", count: 0},
+                    {name: "Approval", href: "/admin-management/approval", count: 0}
                 ]
             })
             baseNavigation.push(

@@ -142,6 +142,48 @@ const removeEnrollment = async (enrollmentId: string | number) => {
     return result.data;
 }
 
+interface GetAllEnrollmentsParams {
+    sort_columns?: string;
+    page_number?: number;
+    page_size?: number;
+}
+
+interface Enrollment {
+    enrollment_id: number;
+    course_id: number;
+    course_title: string;
+    course_description: string;
+    course_category: string;
+    user_id: number;
+    user_name: string;
+    user_email: string;
+    department: string;
+    status: string;
+    progress_percentage: number;
+    time_spent_seconds: number;
+    enrolled_date: string;
+    completed_date: string | null;
+    created_at: string;
+    updated_at: string | null;
+}
+
+interface AllEnrollmentsResponse {
+    enrollments: Enrollment[];
+    totalPages: number;
+    pageSize: number;
+    hasPrevious: boolean;
+    hasNext: boolean;
+    currentPage: number;
+    totalElements: number;
+}
+
+const getAllEnrollments = async (params?: GetAllEnrollmentsParams) => {
+    const result = await http.get(`/api/wba/v1/courses/enrollments`, {
+        params: { ...params }
+    });
+    return result.data?.data as AllEnrollmentsResponse;
+}
+
 interface AddLearnersRequest {
     course_id: number;
     user_ids: number[];
@@ -207,7 +249,8 @@ const courseService = {
     addLearners,
     getMyCourses,
     getMyCourseById,
+    getAllEnrollments,
 }
 
 export default courseService;
-export type { Category, CreateCourseRequest, EnrollCourseRequest, EnrollmentStatus, CourseLearner, CourseLearnersResponse, GetCourseLearnersParams, AddLearnersRequest, MyCourse, MyCoursesResponse };
+export type { Category, CreateCourseRequest, EnrollCourseRequest, EnrollmentStatus, CourseLearner, CourseLearnersResponse, GetCourseLearnersParams, AddLearnersRequest, MyCourse, MyCoursesResponse, GetAllEnrollmentsParams, Enrollment, AllEnrollmentsResponse };
