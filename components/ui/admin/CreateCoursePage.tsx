@@ -130,13 +130,10 @@ export default function CreateCoursePage() {
         <div style={{ padding: '24px', backgroundColor: '#F9FAFB', minHeight: '100vh' }}>
             {/* Header Section */}
             <div style={{ marginBottom: '32px' }}>
-                <BackButton title="Back to Admin Management" href="/admin-management" />
-                <div style={{ marginTop: '16px' }}>
-                    <PageHeader 
-                        title="Create New Course"
-                        subtitle="Design a comprehensive learning course for your team."
-                    />
-                </div>
+                <PageHeader
+                    title="Create New Course"
+                    subtitle="Design a comprehensive learning course for your team."
+                />
             </div>
 
             {/* Basic Information Section */}

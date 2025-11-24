@@ -8,6 +8,7 @@ interface GetQuizzesParams {
     sort_columns?: string;
     page_number?: number;
     page_size?: number;
+    search_value?: string;
 }
 
 export interface CreateQuizRequest {

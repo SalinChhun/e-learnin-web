@@ -101,7 +101,7 @@ const useFetchQuizzes = (limit: number = 10) => {
 /**
  * Hook to fetch all quizzes with infinite scroll (for admin)
  */
-const useFetchAllQuizzesInfinite = (pageSize: number = 10) => {
+const useFetchAllQuizzesInfinite = (pageSize: number = 10, searchValue?: string) => {
     const {
         data,
         fetchNextPage,
@@ -111,12 +111,13 @@ const useFetchAllQuizzesInfinite = (pageSize: number = 10) => {
         error,
         refetch,
     } = useInfiniteQuery({
-        queryKey: ['all-quizzes-infinite', pageSize],
+        queryKey: ['all-quizzes-infinite', pageSize, searchValue],
         queryFn: ({ pageParam = 0 }) => {
             return quizService.getQuizzes({
                 page_number: pageParam as number,
                 page_size: pageSize,
                 sort_columns: 'id:desc', // Get most recent first
+                search_value: searchValue || undefined,
             });
         },
         getNextPageParam: (lastPage: QuizResponse) => {

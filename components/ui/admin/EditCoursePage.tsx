@@ -218,13 +218,10 @@ export default function EditCoursePage() {
         <div style={{ padding: '24px', backgroundColor: '#F9FAFB', minHeight: '100vh' }}>
             {/* Header Section */}
             <div style={{ marginBottom: '32px' }}>
-                <BackButton title="Back to Admin Management" href="/admin-management" />
-                <div style={{ marginTop: '16px' }}>
-                    <PageHeader 
-                        title="Edit Course"
-                        subtitle="Update course information and settings"
-                    />
-                </div>
+                <PageHeader
+                    title="Edit Course"
+                    subtitle="Update course information and settings"
+                />
             </div>
 
             {/* Basic Information Section */}

@@ -245,7 +245,7 @@ const useFetchAllCourses = (limit: number = 10) => {
 /**
  * Hook to fetch all courses with infinite scroll (for admin - includes both published and drafts)
  */
-const useFetchAllCoursesInfinite = (pageSize: number = 10) => {
+const useFetchAllCoursesInfinite = (pageSize: number = 10, searchValue?: string) => {
     const {
         data,
         fetchNextPage,
@@ -255,12 +255,13 @@ const useFetchAllCoursesInfinite = (pageSize: number = 10) => {
         error,
         refetch,
     } = useInfiniteQuery({
-        queryKey: ['all-courses-infinite', pageSize],
+        queryKey: ['all-courses-infinite', pageSize, searchValue],
         queryFn: ({ pageParam = 0 }) => {
             return courseService.getCourses({
                 page_number: pageParam as number,
                 page_size: pageSize,
                 sort_columns: 'created_at:desc', // Get most recent first
+                search_value: searchValue || undefined,
             });
         },
         getNextPageParam: (lastPage: CourseResponse) => {

@@ -3,7 +3,6 @@
 import React, { useState, useCallback, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { Spinner } from 'react-bootstrap'
-import BackButton from '@/components/shared/BackButton'
 import PageHeader from '@/components/ui/bar/PageHeader'
 import { useFetchCertificateTemplates, useFetchCertificateTemplatesInfinite, useDeleteCertificateTemplate } from '@/lib/hook/use-course'
 import CreateCertificateTemplateModal from '@/components/ui/admin/CreateCertificateTemplateModal'
@@ -118,7 +117,6 @@ export default function CertificateTemplatesPage() {
     if (error) {
         return (
             <div style={{ padding: '24px', backgroundColor: '#F9FAFB', minHeight: '100vh' }}>
-                <BackButton title="Back to Admin Management" href="/admin-management" />
                 <div style={{ marginTop: '32px', textAlign: 'center', color: '#EF4444' }}>
                     <p>Error loading certificate templates. Please try again.</p>
                 </div>
@@ -130,9 +128,7 @@ export default function CertificateTemplatesPage() {
         <div style={{ padding: '24px', backgroundColor: '#F9FAFB', minHeight: '100vh' }}>
             {/* Header Section */}
             <div style={{ marginBottom: '32px' }}>
-                <BackButton title="Back to Admin Management" href="/admin-management" />
-                <div style={{ 
-                    marginTop: '16px', 
+                <div style={{
                     display: 'flex', 
                     justifyContent: 'space-between', 
                     alignItems: 'flex-start' 

@@ -5,7 +5,7 @@ import "@/styles/sidebar.css"
 import {signOut} from "next-auth/react"
 import Link from "next/link"
 import {usePathname} from "next/navigation"
-import {useEffect, useMemo} from "react"
+import {useEffect, useMemo, useState} from "react"
 import usePermissions from "@/lib/hook/usePermissions"
 
 interface NavItem {
@@ -13,12 +13,29 @@ interface NavItem {
     href: string
     icon?: string,
     count: number,
+    subItems?: NavItem[]
 }
 
 export default function Sidebar() {
 
     const pathname = usePathname()
     const { isAdmin } = usePermissions()
+    const [expandedMenus, setExpandedMenus] = useState<Set<string>>(new Set())
+
+    // Check if Admin Management should be expanded (if any sub-menu or create/edit page is active)
+    useEffect(() => {
+        if (isAdmin && (
+            pathname.includes('/admin-management/all-course') ||
+            pathname.includes('/admin-management/all-quiz') ||
+            pathname.includes('/admin-management/certificate-templates') ||
+            pathname.includes('/admin-management/create-course') ||
+            pathname.includes('/admin-management/edit-course') ||
+            pathname.includes('/admin-management/create-quiz') ||
+            pathname.includes('/admin-management/edit-quiz')
+        )) {
+            setExpandedMenus(new Set(['admin-management']))
+        }
+    }, [pathname, isAdmin])
 
     const navigation: NavItem[] = useMemo(() => {
         const baseNavigation: NavItem[] = [
@@ -28,14 +45,36 @@ export default function Sidebar() {
 
         // Only show Admin Management and User Management if user is admin
         if (isAdmin) {
+            baseNavigation.push({
+                name: "Admin Management", 
+                icon: "wl-apis-menu", 
+                href: "/admin-management/all-course", 
+                count: 0,
+                subItems: [
+                    {name: "All Course", href: "/admin-management/all-course", count: 0},
+                    {name: "Quiz/Exam", href: "/admin-management/all-quiz", count: 0},
+                    {name: "Certificate Templates", href: "/admin-management/certificate-templates", count: 0}
+                ]
+            })
             baseNavigation.push(
-                {name: "Admin Management", icon: "wl-apis-menu", href: "/admin-management", count: 0},
                 {name: "User Management", icon: "api-icon", href: "/users", count: 0}
             )
         }
 
         return baseNavigation
     }, [isAdmin]);
+
+    const toggleMenu = (menuName: string) => {
+        setExpandedMenus(prev => {
+            const newSet = new Set(prev)
+            if (newSet.has(menuName)) {
+                newSet.delete(menuName)
+            } else {
+                newSet.add(menuName)
+            }
+            return newSet
+        })
+    }
 
     return (
         <>
@@ -74,19 +113,91 @@ export default function Sidebar() {
                 <div className="wl-sidebar-collapse-wrapper accordion" id="SidebarMenuWrapperId">
                     <ul className="wl-sidebar-menu-container">
                         {navigation.map((item) => {
-                            const isActive = pathname.includes(item.href);
+                            const isActive = pathname === item.href || (pathname.includes(item.href) && !item.subItems);
+                            const hasSubItems = item.subItems && item.subItems.length > 0
+                            const isExpanded = expandedMenus.has(item.name.toLowerCase().replace(/\s+/g, '-'))
+                            
                             return (
-                                <Link key={item.name} href={item.href} className="wl-sidebar-menu-title">
-                                    <li className={`wl-sidebar-menu ${item.icon} ${isActive ? "wl-active" : ""}`}>
-
+                                <li key={item.name} style={{ listStyle: 'none' }}>
+                                    {hasSubItems ? (
                                         <>
-                                            <label className="wl-sidebar-menu-title">{item.name}</label>
-                                            {item.count > 0 &&
-                                                <span className="wl-sidebar-menu-badge">{item.count}</span>}
+                                            <div 
+                                                onClick={() => toggleMenu(item.name.toLowerCase().replace(/\s+/g, '-'))}
+                                                className={`wl-sidebar-menu ${item.icon}`}
+                                                style={{ cursor: 'pointer' }}
+                                            >
+                                                <label className="wl-sidebar-menu-title">{item.name}</label>
+                                                {item.count > 0 && <span className="wl-sidebar-menu-badge">{item.count}</span>}
+                                                <svg 
+                                                    width="16" 
+                                                    height="16" 
+                                                    viewBox="0 0 16 16" 
+                                                    fill="none"
+                                                    style={{
+                                                        marginLeft: 'auto',
+                                                        transform: isExpanded ? 'rotate(180deg)' : 'rotate(0deg)',
+                                                        transition: 'transform 0.2s'
+                                                    }}
+                                                >
+                                                    <path d="M4 6L8 10L12 6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                                                </svg>
+                                            </div>
+                                            {isExpanded && (
+                                                <ul style={{ paddingLeft: '24px', marginTop: '4px', listStyle: 'none' }}>
+                                                    {item.subItems?.map((subItem) => {
+                                                        // Check if sub-item is active, including create/edit pages
+                                                        let isSubActive = pathname.includes(subItem.href)
+                                                        
+                                                        // For "All Course" sub-item, also check create-course and edit-course
+                                                        if (subItem.href === '/admin-management/all-course') {
+                                                            isSubActive = isSubActive || 
+                                                                pathname.includes('/admin-management/create-course') ||
+                                                                pathname.includes('/admin-management/edit-course')
+                                                        }
+                                                        
+                                                        // For "Quiz/Exam" sub-item, also check create-quiz and edit-quiz
+                                                        if (subItem.href === '/admin-management/all-quiz') {
+                                                            isSubActive = isSubActive || 
+                                                                pathname.includes('/admin-management/create-quiz') ||
+                                                                pathname.includes('/admin-management/edit-quiz')
+                                                        }
+                                                        
+                                                        return (
+                                                            <li key={subItem.name} style={{ listStyle: 'none' }}>
+                                                                <Link href={subItem.href} className="wl-sidebar-menu-title" style={{ textDecoration: 'none' }}>
+                                                                    <div 
+                                                                        className={`wl-sidebar-menu ${isSubActive ? "wl-active" : ""}`}
+                                                                        style={{
+                                                                            backgroundColor: isSubActive ? '#003D7A' : 'transparent',
+                                                                            color: isSubActive ? 'white' : '#6B7280',
+                                                                            padding: '8px 12px',
+                                                                            borderRadius: '8px',
+                                                                            marginBottom: '4px',
+                                                                            fontSize: '14px',
+                                                                            fontWeight: isSubActive ? '500' : '400'
+                                                                        }}
+                                                                    >
+                                                                        <label className="wl-sidebar-menu-title" style={{ margin: 0, cursor: 'pointer' }}>
+                                                                            {subItem.name}
+                                                                        </label>
+                                                                    </div>
+                                                                </Link>
+                                                            </li>
+                                                        )
+                                                    })}
+                                                </ul>
+                                            )}
                                         </>
-
-                                    </li>
-                                </Link>
+                                    ) : (
+                                        <Link href={item.href} className="wl-sidebar-menu-title" style={{ textDecoration: 'none' }}>
+                                            <div className={`wl-sidebar-menu ${item.icon} ${isActive ? "wl-active" : ""}`}>
+                                                <label className="wl-sidebar-menu-title">{item.name}</label>
+                                                {item.count > 0 &&
+                                                    <span className="wl-sidebar-menu-badge">{item.count}</span>}
+                                            </div>
+                                        </Link>
+                                    )}
+                                </li>
                             )
                         })}
                     </ul>

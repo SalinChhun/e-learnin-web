@@ -135,13 +135,10 @@ export default function CreateQuizPage() {
         <div style={{ padding: '24px', backgroundColor: '#F9FAFB', minHeight: '100vh' }}>
             {/* Header Section */}
             <div style={{ marginBottom: '32px' }}>
-                <BackButton title="Back to Admin Management" href="/admin-management" />
-                <div style={{ marginTop: '16px' }}>
-                    <PageHeader 
-                        title="Create Quiz/Exam"
-                        subtitle="Design assessments with multiple choice and open-ended questions"
-                    />
-                </div>
+                <PageHeader
+                    title="Create Quiz/Exam"
+                    subtitle="Design assessments with multiple choice and open-ended questions"
+                />
             </div>
 
             <form onSubmit={handleCreate}>
