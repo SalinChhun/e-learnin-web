@@ -232,6 +232,9 @@ const DataTable = <T extends { id: string }>({
                                                         }
                                                     }}
                                                     onChange={handleSelectAll}
+                                                    style={{
+                                                        ...(areAllRowsSelected() && {backgroundColor: '#003D7A'})
+                                                    }}
                                                 />
                                             </label>
                                         </th>
@@ -313,6 +316,9 @@ const DataTable = <T extends { id: string }>({
                                                         handleRowSelect(row.id, e.target.checked);
                                                     }}
                                                     onClick={(e) => e.stopPropagation()}
+                                                    style={{
+                                                        ...(selectedRows[row.id] && {backgroundColor: '#003D7A'})
+                                                    }}
                                                 />
                                             </label>
                                         </td>

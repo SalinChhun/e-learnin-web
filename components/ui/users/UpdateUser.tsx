@@ -270,7 +270,7 @@ const UpdateUser: React.FC<Props> =({isOpen, handleClose, handleChangePassword, 
                     <button
                         disabled={updateUserMutation.isLoading}
                         type="submit"
-                        className="wl-btn-primary wl-width-100"
+                        style={{backgroundColor: '#003D7A', color: '#FFFFFF'}}
                     >
                         {
                             updateUserMutation.isLoading ?

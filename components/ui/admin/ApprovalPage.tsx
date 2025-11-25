@@ -121,11 +121,7 @@ export default function ApprovalPage() {
                 ref={scrollContainerRef}
                 onScroll={handleScroll}
                 style={{
-                    backgroundColor: 'white',
-                    borderRadius: '12px',
-                    padding: '24px',
-                    boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)',
-                    maxHeight: 'calc(100vh - 200px)',
+                    maxHeight: 'calc(100vh - 140px)',
                     overflowY: 'auto'
                 }}
             >

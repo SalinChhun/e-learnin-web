@@ -9,6 +9,7 @@ interface GetCertificateTemplatesParams {
     sort_columns?: string;
     page_number?: number;
     page_size?: number;
+    search_value?: string;
 }
 
 export interface CertificateTemplate {
@@ -51,6 +52,11 @@ const getCertificateTemplates = async (params?: GetCertificateTemplatesParams) =
     // Only add status if provided (1=DRAFT, 2=ACTIVE, 9=DELETE)
     if (params?.status !== undefined) {
         queryParams.status = params.status;
+    }
+    
+    // Add search_value if provided
+    if (params?.search_value) {
+        queryParams.search_value = params.search_value;
     }
     
     const result = await http.get(ServiceId.CERTIFICATE_TEMPLATES, {

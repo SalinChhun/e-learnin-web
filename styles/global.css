@@ -136,3 +136,5 @@
     cursor: pointer !important;
     pointer-events: auto !important;
 }
+input[type="checkbox"]:checked, input[type="checkbox"]:indeterminate, input[type="checkbox"][indeterminate="true"]:checked {
+    background-color: var(--Forgrounds-FG-PRM-08, #003D7A);}

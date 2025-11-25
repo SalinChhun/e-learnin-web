@@ -193,13 +193,13 @@ export default function Sidebar() {
                                     ) : (
                                         <Link href={item.href} className="wl-sidebar-menu-title" style={{ textDecoration: 'none' }}>
                                             <div className={`wl-sidebar-menu ${item.icon} ${isActive ? "wl-active" : ""}`}>
-                                                <label className="wl-sidebar-menu-title">{item.name}</label>
-                                                {item.count > 0 &&
-                                                    <span className="wl-sidebar-menu-badge">{item.count}</span>}
+                                            <label className="wl-sidebar-menu-title">{item.name}</label>
+                                            {item.count > 0 &&
+                                                <span className="wl-sidebar-menu-badge">{item.count}</span>}
                                             </div>
                                         </Link>
                                     )}
-                                </li>
+                                    </li>
                             )
                         })}
                     </ul>

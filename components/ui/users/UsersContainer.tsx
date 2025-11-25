@@ -1,6 +1,6 @@
 'use client'
 
-import DataTable, { ActionMenuItem } from '@/components/common/DataTable';
+import DataTable, {ActionMenuItem} from '@/components/common/DataTable';
 import DatePickerWrapper from '@/components/common/DatePickerWrapperProps';
 import PaginationComponent from '@/components/common/PaginationComponent';
 import UserPageSkelation from '@/components/loading/UserPageSkelation';
@@ -8,18 +8,19 @@ import FilterStatus from '@/components/shared/FilterStatus';
 import LabelStatus from '@/components/shared/LabelStatus';
 import SelectRowAction from "@/components/shared/SelectRowAction";
 import SummaryCard from '@/components/shared/SummaryCard';
-import { DateFormatEnum, localStroageEnum, PopupTypeEnum, RowActionEnum, StatusEnum } from '@/lib/enums/enums';
-import { Action, RES_PERM_ACTION, Resource } from '@/lib/enums/permissionEnums';
-import { useColumnVisibility } from '@/lib/hook/use-column-visibility';
+import PageHeader from '@/components/ui/bar/PageHeader';
+import {DateFormatEnum, localStroageEnum, PopupTypeEnum, RowActionEnum, StatusEnum} from '@/lib/enums/enums';
+import {RES_PERM_ACTION} from '@/lib/enums/permissionEnums';
+import {useColumnVisibility} from '@/lib/hook/use-column-visibility';
 import useUserMutation from "@/lib/hook/use-user-mutation";
 import usePermissions from '@/lib/hook/usePermissions';
-import { usePopupStore } from '@/lib/store';
-import { CustomColumnDef } from '@/lib/types/table';
-import { User } from '@/lib/types/user';
+import {usePopupStore} from '@/lib/store';
+import {CustomColumnDef} from '@/lib/types/table';
+import {User} from '@/lib/types/user';
 import dayjs from 'dayjs';
 import dynamic from 'next/dynamic';
 import Image from 'next/image';
-import { useEffect, useState } from 'react';
+import {useEffect, useState} from 'react';
 
 
 const SearchComponent = dynamic(() => import('@/components/shared/SearchComponent'))
@@ -88,14 +89,6 @@ const columns: CustomColumnDef<User>[] = [
         className: 'wl-col-login',
         cell: ({row}) => row?.original?.last_login && dayjs(row?.original?.last_login).format(DateFormatEnum.CUSTOM_DATE)
     },
-    // {
-    //     accessor: 'last_log',
-    //     accessorKey: 'last_log',
-    //     header: 'Logs',
-    //     enableSorting: false,
-    //     enableHiding: true,
-    //     className: 'wl-col-logs',
-    // },
     {
         accessor: 'status',
         accessorKey: 'status',
@@ -113,7 +106,7 @@ const UsersContainerClient = ({sessionData}: UsersContainerClientProps) => {
     const { userQuery } = useUserMutation.useFetchUsers();
     const [isInitialLoad, setIsInitialLoad] = useState(true);
     const [userData, setUserData] = useState<any>([]);
-    const { hasAnyPermission } = usePermissions();
+    const { isAdmin } = usePermissions()
 
     const {
         isLoading,
@@ -193,23 +186,33 @@ const UsersContainerClient = ({sessionData}: UsersContainerClientProps) => {
     return (
         <>
             <div className="w-100 h-100 d-flex flex-column gap-4 overflow-hidden">
+                {/* Page Header */}
+                <div>
+                    <PageHeader 
+                        title="User Management"
+                        subtitle="Manage user accounts and permissions"
+                    />
+                </div>
+                
                 <div className="d-flex flex-wrap justify-content-between align-items-center gap-4 p-1">
 
                     {/*TODO: Handle selectedRows action*/}
-                    {hasAnyPermission([RES_PERM_ACTION.USER_DELETE,RES_PERM_ACTION.USER_UPDATE]) && <SelectRowAction
-                        selectedRows={selectedRows}
-                        actionType={RowActionEnum.USER}
-                        onSelectedRowsChange={setSelectedRows}
-                        onEdit={(row: any) =>
-                            openPopup(PopupTypeEnum.UPDATE_USER, {
-                                selectedRow: row,
-                                handleChangePassword: handleChangePassword,
-                                onSuccess: () => setSelectedRows([]),
-                            })
-                        }
-                    />}
+                    { isAdmin &&
+                        <SelectRowAction
+                            selectedRows={selectedRows}
+                            actionType={RowActionEnum.USER}
+                            onSelectedRowsChange={setSelectedRows}
+                            onEdit={(row: any) =>
+                                openPopup(PopupTypeEnum.UPDATE_USER, {
+                                    selectedRow: row,
+                                    handleChangePassword: handleChangePassword,
+                                    onSuccess: () => setSelectedRows([]),
+                                })
+                            }
+                        />
+                    }
                     {
-                        (selectedRows.length === 0 || selectedRows.length > 0 && !hasAnyPermission([RES_PERM_ACTION.USER_DELETE,RES_PERM_ACTION.USER_UPDATE])) && (
+                        (selectedRows.length === 0 || selectedRows.length > 0 &&  !isAdmin) && (
                             <div className="d-inline-flex align-items-center gap-2">
                                 <DatePickerWrapper storageKey={`${localStroageEnum.DATEPICK}-${sessionData?.user?.name}`}/>
                             </div>
@@ -220,12 +223,14 @@ const UsersContainerClient = ({sessionData}: UsersContainerClientProps) => {
                                           setColumnVisibility={setColumnVisibility}
                                           localStorageKey={localStroageEnum.VEIWCOLUMN}/>
                         <SearchComponent placeholder="Search username"/>
-                        {hasAnyPermission([RES_PERM_ACTION.USER_CREATE]) && (
-                        <button
-                            type="button" onClick={() => openPopup(PopupTypeEnum.CREATE_USER)}
-                            className="wl-btn-primary wl-btn-action wl-icon-plus"
-                            aria-label="Create button"> Create
-                            </button>)}
+                        { isAdmin &&
+                            <button
+                                type="button" onClick={() => openPopup(PopupTypeEnum.CREATE_USER)}
+                                className="wl-btn-action wl-icon-plus"
+                                style={{backgroundColor: '#003D7A', color: '#FFFFFF'}}
+                                aria-label="Create button"> Create
+                            </button>
+                        }
                     </div>
                 </div>
                 <div className="w-100 px-1">
@@ -253,7 +258,7 @@ const UsersContainerClient = ({sessionData}: UsersContainerClientProps) => {
                                 columns={visibleColumnsList}
                                 isLoading={!isInitialLoad && userQuery.isLoading || isLoading}
                                 enableSelection={true} 
-                                actionItems={hasAnyPermission([RES_PERM_ACTION.USER_DELETE,RES_PERM_ACTION.USER_UPDATE]) ? actionItems : []}
+                                actionItems={ isAdmin ? actionItems : []}
                                 onRowSelect={handleRowSelect}
                                 onSelectAll={(allSelected: boolean) => {
                                     if (allSelected) {

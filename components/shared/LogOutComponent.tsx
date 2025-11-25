@@ -67,14 +67,14 @@ const LogOutComponent: React.FC<ConfirmationPopupProps> = ({
                 <button
                     data-bs-dismiss="modal"
                     type="button"
-                    className="wl-btn-primary-text"
+                    style={{color: '#003D7A'}}
                     onClick={handleClose}
                 >
                     Cancel
                 </button>
                 <button
                     type="button"
-                    className="wl-btn-primary"
+                    style={{backgroundColor: '#003D7A', color: '#FFFFFF'}}
                     data-bs-dismiss="modal"
                     onClick={handleLogout}
                 >

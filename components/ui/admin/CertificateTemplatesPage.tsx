@@ -1,7 +1,7 @@
 'use client'
 
-import React, { useState, useCallback, useRef } from 'react'
-import { useRouter } from 'next/navigation'
+import React, { useState, useCallback, useRef, useEffect } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { Spinner } from 'react-bootstrap'
 import PageHeader from '@/components/ui/bar/PageHeader'
 import { useFetchCertificateTemplates, useFetchCertificateTemplatesInfinite, useDeleteCertificateTemplate } from '@/lib/hook/use-course'
@@ -14,9 +14,13 @@ type FilterStatus = 'all' | 'active' | 'draft'
 
 export default function CertificateTemplatesPage() {
     const router = useRouter()
+    const searchParams = useSearchParams()
     const scrollContainerRef = useRef<HTMLDivElement>(null)
+    const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null)
     const { mutation: deleteTemplateMutation, isPending: isDeleting } = useDeleteCertificateTemplate()
     const [filterStatus, setFilterStatus] = useState<FilterStatus>('all')
+    const [searchQuery, setSearchQuery] = useState(searchParams.get('search_value') || '')
+    const [debouncedSearchQuery, setDebouncedSearchQuery] = useState(searchParams.get('search_value') || '')
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
     const [editTemplateId, setEditTemplateId] = useState<number | null>(null)
     const [previewTemplate, setPreviewTemplate] = useState<{
@@ -41,7 +45,37 @@ export default function CertificateTemplatesPage() {
         isFetchingNextPage, 
         isLoading, 
         error 
-    } = useFetchCertificateTemplatesInfinite(apiStatus, 10)
+    } = useFetchCertificateTemplatesInfinite(apiStatus, 10, debouncedSearchQuery || undefined)
+
+    // Debounce search query
+    useEffect(() => {
+        if (searchTimeoutRef.current) {
+            clearTimeout(searchTimeoutRef.current)
+        }
+        
+        searchTimeoutRef.current = setTimeout(() => {
+            setDebouncedSearchQuery(searchQuery)
+        }, 500)
+        
+        return () => {
+            if (searchTimeoutRef.current) {
+                clearTimeout(searchTimeoutRef.current)
+            }
+        }
+    }, [searchQuery])
+
+    // Update URL params when search changes
+    useEffect(() => {
+        const params = new URLSearchParams(searchParams.toString())
+        
+        if (debouncedSearchQuery) {
+            params.set('search_value', debouncedSearchQuery)
+        } else {
+            params.delete('search_value')
+        }
+        
+        router.push(`?${params.toString()}`, { scroll: false })
+    }, [debouncedSearchQuery, router, searchParams])
 
     // Use all summary for display (it has the complete stats)
     const displaySummary = allSummary
@@ -128,15 +162,75 @@ export default function CertificateTemplatesPage() {
         <div style={{ padding: '24px', backgroundColor: '#F9FAFB', minHeight: '100vh' }}>
             {/* Header Section */}
             <div style={{ marginBottom: '32px' }}>
-                <div style={{
+                <div style={{ marginBottom: '24px' }}>
+                    <PageHeader 
+                        title="Certificate Templates"
+                        subtitle="Design and manage digital certificates for course completion"
+                    />
+                </div>
+                
+                {/* Search Bar and Create Button */}
+                <div style={{ 
                     display: 'flex', 
                     justifyContent: 'space-between', 
-                    alignItems: 'flex-start' 
+                    alignItems: 'center',
+                    gap: '16px'
                 }}>
-                    <div>
-                        <PageHeader 
-                            title="Certificate Templates"
-                            subtitle="Design and manage digital certificates for course completion"
+                    <div style={{ position: 'relative', maxWidth: '400px', flex: 1 }}>
+                        <svg
+                            width="18"
+                            height="18"
+                            viewBox="0 0 18 18"
+                            fill="none"
+                            style={{
+                                position: 'absolute',
+                                left: '16px',
+                                top: '50%',
+                                transform: 'translateY(-50%)',
+                                pointerEvents: 'none',
+                                zIndex: 1
+                            }}
+                        >
+                            <path
+                                d="M8.25 14.25C11.5637 14.25 14.25 11.5637 14.25 8.25C14.25 4.93629 11.5637 2.25 8.25 2.25C4.93629 2.25 2.25 4.93629 2.25 8.25C2.25 11.5637 4.93629 14.25 8.25 14.25Z"
+                                stroke="#9CA3AF"
+                                strokeWidth="1.5"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                            />
+                            <path
+                                d="M15.75 15.75L12.4875 12.4875"
+                                stroke="#9CA3AF"
+                                strokeWidth="1.5"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                            />
+                        </svg>
+                        <input
+                            type="text"
+                            placeholder="Search templates..."
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            style={{
+                                width: '100%',
+                                height: '30px',
+                                padding: '10px 16px 10px 44px',
+                                backgroundColor: '#F3F4F6',
+                                border: 'none',
+                                borderRadius: '8px',
+                                fontSize: '14px',
+                                outline: 'none',
+                                transition: 'all 0.2s',
+                                boxSizing: 'border-box'
+                            }}
+                            onFocus={(e) => {
+                                e.target.style.backgroundColor = '#FFFFFF'
+                                e.target.style.boxShadow = '0 0 0 3px rgba(0, 61, 122, 0.1)'
+                            }}
+                            onBlur={(e) => {
+                                e.target.style.backgroundColor = '#F3F4F6'
+                                e.target.style.boxShadow = 'none'
+                            }}
                         />
                     </div>
                     <button
@@ -155,7 +249,8 @@ export default function CertificateTemplatesPage() {
                             alignItems: 'center',
                             gap: '8px',
                             transition: 'background-color 0.2s',
-                            height: 'fit-content'
+                            height: '40px',
+                            whiteSpace: 'nowrap'
                         }}
                         onMouseEnter={(e) => {
                             e.currentTarget.style.backgroundColor = '#002855'

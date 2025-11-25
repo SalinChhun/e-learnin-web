@@ -7,12 +7,7 @@ import React, { lazy, Suspense } from "react";
 // Import other popups as needed
 const CreateUser = lazy(() => import("@/components/ui/users/CreateUser"));
 const UpdateUser = lazy(() => import("@/components/ui/users/UpdateUser"));
-const UpdateClient = lazy(() => import("@/components/ui/providers/UpdateProvider"));
 const UserDetails = lazy(() => import("@/components/ui/users/UserDetails"));
-const ClientDetails = lazy(
-  () => import("@/components/ui/providers/ProviderDetails")
-);
-const CreateProvider = lazy(() => import("@/components/ui/providers/CreateProvider"));
 const ConfirmationPopup = lazy(
   () => import("@/components/shared/ConfirmationPopup")
 );
@@ -21,25 +16,6 @@ const LogOutComponent = lazy(
 );
 const ResetPasswordModal = lazy(
   () => import("@/components/shared/ResetPasswordModal")
-);
-const APIPermissionInfo = lazy(
-  () => import("@/components/ui/api-permission/APIPermissionInfo")
-);
-const AssignAPIPermission = lazy(
-  () => import("@/components/ui/api-permission/AssignAPIPermission")
-);
-const UpdateAPIPermission = lazy(
-  () => import("@/components/ui/api-permission/UpdateAPIPermission")
-);
-// Auth Config popups
-const CreateAuthConfig = lazy(
-  () => import("@/components/ui/auth-config/CreateAuthConfig")
-);
-const UpdateAuthConfig = lazy(
-  () => import("@/components/ui/auth-config/UpdateAuthConfig")
-);
-const AuthConfigDetails = lazy(
-  () => import("@/components/ui/auth-config/AuthConfigDetails")
 );
 
 // Loading fallback for when a popup is being loaded
@@ -68,8 +44,6 @@ const PopupRenderer = ({
   switch (type) {
     case PopupTypeEnum.CREATE_USER:
       return <CreateUser {...props} />;
-    case PopupTypeEnum.CREATE_PARTNER:
-      return <CreateProvider {...props} />;
     case PopupTypeEnum.SUSPEND_USER:
       return <ConfirmationPopup {...props} />;
     case PopupTypeEnum.REACTIVATE_USER:
@@ -78,8 +52,6 @@ const PopupRenderer = ({
       return <UpdateUser {...props} />;
     case PopupTypeEnum.RESET_PASSOWRD:
       return <ResetPasswordModal {...props} />;
-    case PopupTypeEnum.UPDATE_PARTNER:
-      return <UpdateClient {...props} />;
     case PopupTypeEnum.DELETE_USER:
       return <ConfirmationPopup {...props} />;
     case PopupTypeEnum.DELETE_PARTNER:
@@ -92,29 +64,14 @@ const PopupRenderer = ({
       return <ConfirmationPopup {...props} />;
     case PopupTypeEnum.USER_DETAILS:
       return <UserDetails {...props} />;
-    case PopupTypeEnum.PARTNER_DETAILS:
-      return <ClientDetails {...props} />;
     case PopupTypeEnum.LOG_OUT:
       return <LogOutComponent {...props} />;
-    case PopupTypeEnum.API_PERMISSION_INFO:
-      return <APIPermissionInfo {...props} />;
-    case PopupTypeEnum.API_PERMISSION_ASSIGN:
-      return <AssignAPIPermission {...props} />;
-    case PopupTypeEnum.API_PERMISSION_EDIT:
-      return <UpdateAPIPermission {...props} />;
     case PopupTypeEnum.API_PERMISSION_DELETE:
       return <ConfirmationPopup {...props} />;
     case PopupTypeEnum.API_PERMISSION_ENABLED:
       return <ConfirmationPopup {...props} />;
     case PopupTypeEnum.API_PERMISSION_DISABLE:
       return <ConfirmationPopup {...props} />;
-    // AUTH CONFIG
-    case PopupTypeEnum.AUTH_CONFIG_CREATE:
-      return <CreateAuthConfig {...props} />;
-    case PopupTypeEnum.AUTH_CONFIG_EDIT:
-      return <UpdateAuthConfig {...props} />;
-    case PopupTypeEnum.AUTH_CONFIG_INFO:
-      return <AuthConfigDetails {...props} />;
     case PopupTypeEnum.AUTH_CONFIG_DELETE:
     case PopupTypeEnum.AUTH_CONFIG_STATUS:
     case PopupTypeEnum.AUTH_CONFIG_ENABLED:

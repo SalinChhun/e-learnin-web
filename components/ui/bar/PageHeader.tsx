@@ -54,8 +54,8 @@ export default function PageHeader({ title, subtitle }: PageHeaderProps) {
                             </p>
                             )}
                         </div>
-                        {
-                            pathname.includes('/courses') &&
+                        {/*{*/}
+                        {/*    pathname.includes('/courses') &&*/}
                             <div className="d-flex align-items-center gap-4">
                                 <div className="position-relative" style={{cursor: 'pointer', marginTop: '5px'}}>
                                     <svg width="20" height="20" viewBox="0 0 16 16" fill="none"
@@ -94,7 +94,7 @@ export default function PageHeader({ title, subtitle }: PageHeaderProps) {
                                 </div>
                                 <DropdownProfile/>
                             </div>
-                        }
+                        {/*}*/}
                     </div>
                 </div>
             {/*</div>*/}

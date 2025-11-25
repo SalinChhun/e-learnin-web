@@ -96,7 +96,8 @@ function LoginFormContent({ callbackUrl = '/courses' }: { callbackUrl: string })
             });
 
             if (result?.error) {
-                setError('Invalid username or password');
+                // Use the actual error message from the API
+                setError(result.error || 'Invalid username or password');
                 return;
             }
     
@@ -224,22 +225,6 @@ function LoginFormContent({ callbackUrl = '/courses' }: { callbackUrl: string })
                                             </div>
                                         </div>
                                     </div>
-
-                                    {/*<div className="d-flex align-items-center gap-2">
-                                        <input 
-                                            type="checkbox" 
-                                            id="checkboxId" 
-                                            {...register('rememberMe')} 
-                                            style={{ cursor: 'pointer' }}
-                                        />
-                                        <label 
-                                            className="wl-button-lg" 
-                                            htmlFor="checkboxId"
-                                            style={{ cursor: 'pointer', fontSize: '14px', color: '#374151', margin: 0 }}
-                                        >
-                                            Remember ID
-                                        </label>
-                                    </div>*/}
                                 </div>
                                 {error && (
                                     <div className="alert alert-danger" style={{ margin: 0 }}>

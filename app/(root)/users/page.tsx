@@ -8,8 +8,7 @@ export default async function UsersPage() {
     const session = await getServerSession(authOptions);
 
     return (
-        <div className="h-100 d-flex flex-column px-4 mb-4 overflow-hidden">
-            <HeadLabel />
+        <div style={{padding: '24px'}} className="h-100 d-flex flex-column overflow-hidden">
             <UsersContainer sessionData={session} />
         </div>
     );

@@ -319,7 +319,7 @@ const useFetchCertificateTemplates = (status?: string | number) => {
 /**
  * Hook to fetch certificate templates with infinite scroll
  */
-const useFetchCertificateTemplatesInfinite = (status?: string | number, pageSize: number = 10) => {
+const useFetchCertificateTemplatesInfinite = (status?: string | number, pageSize: number = 10, searchValue?: string) => {
     const {
         data,
         fetchNextPage,
@@ -329,13 +329,14 @@ const useFetchCertificateTemplatesInfinite = (status?: string | number, pageSize
         error,
         refetch,
     } = useInfiniteQuery({
-        queryKey: ['certificate-templates-infinite', status, pageSize],
+        queryKey: ['certificate-templates-infinite', status, pageSize, searchValue],
         queryFn: ({ pageParam = 0 }) => {
             return certificateTemplateService.getCertificateTemplates({
                 status: status, // 1=DRAFT, 2=ACTIVE, 9=DELETE, undefined=all
                 sort_columns: 'id:desc',
                 page_number: pageParam as number,
                 page_size: pageSize,
+                search_value: searchValue,
             });
         },
         getNextPageParam: (lastPage: any) => {

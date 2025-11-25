@@ -117,7 +117,8 @@ export const authOptions: NextAuthOptions = {
                     const data = response.data as LoginResponse;
 
                     if (data?.status?.code !== 200 || !data?.data?.access_token) {
-                        throw new Error(data?.status?.message || "Login failed");
+                        const errorMessage = data?.status?.message || "Login failed";
+                        throw new Error(errorMessage);
                     }
 
                     const rememberMe = true
@@ -143,7 +144,22 @@ export const authOptions: NextAuthOptions = {
                     };
                 } catch (error:any) {
                     console.error("Authentication error:", error);
-                    return null;
+                    // Extract error message from API response
+                    let errorMessage = "Invalid username or password";
+                    
+                    if (error?.response?.data?.status?.message) {
+                        // API returned error with status message
+                        errorMessage = error.response.data.status.message;
+                    } else if (error?.message) {
+                        // Error thrown with message
+                        errorMessage = error.message;
+                    } else if (error?.response?.data?.message) {
+                        // Alternative error message location
+                        errorMessage = error.response.data.message;
+                    }
+                    
+                    // Throw error so NextAuth can pass it through
+                    throw new Error(errorMessage);
                 }
             },
         }),
