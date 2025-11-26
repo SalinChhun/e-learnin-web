@@ -82,35 +82,37 @@ export default function Sidebar() {
         <>
             <aside className="wl-sidebar wl-sidebar-bg-color border-end wl-px-12">
                 <div className="d-flex flex-column wl-gap-20">
-                    <div className="d-flex align-items-center wl-gap-10">
-                        <div style={{
-                            width: '40px',
-                            height: '40px',
-                            backgroundColor: '#003D7A',
-                            borderRadius: '8px',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center'
-                        }}>
-                            <svg width="24" height="24" viewBox="0 0 80 80" fill="none"
-                                 xmlns="http://www.w3.org/2000/svg">
-                                <path
-                                    d="M58.8401 37.844C59.1981 37.6861 59.502 37.4266 59.7139 37.0976C59.9259 36.7687 60.0368 36.3848 60.0327 35.9935C60.0287 35.6022 59.9099 35.2207 59.6912 34.8962C59.4724 34.5717 59.1633 34.3185 58.8021 34.168L41.6601 26.36C41.139 26.1223 40.5729 25.9993 40.0001 25.9993C39.4273 25.9993 38.8612 26.1223 38.3401 26.36L21.2001 34.16C20.844 34.316 20.5411 34.5723 20.3284 34.8976C20.1157 35.223 20.0024 35.6033 20.0024 35.992C20.0024 36.3807 20.1157 36.761 20.3284 37.0864C20.5411 37.4117 20.844 37.6681 21.2001 37.824L38.3401 45.64C38.8612 45.8777 39.4273 46.0007 40.0001 46.0007C40.5729 46.0007 41.139 45.8777 41.6601 45.64L58.8401 37.844Z"
-                                    stroke="white" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round"/>
-                                <path d="M60 36V48" stroke="white" strokeWidth="4" strokeLinecap="round"
-                                      strokeLinejoin="round"/>
-                                <path
-                                    d="M28 41V48C28 49.5913 29.2643 51.1174 31.5147 52.2426C33.7652 53.3679 36.8174 54 40 54C43.1826 54 46.2348 53.3679 48.4853 52.2426C50.7357 51.1174 52 49.5913 52 48V41"
-                                    stroke="white" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round"/>
-                            </svg>
-                        </div>
+                    <Link href={PathRoute.MY_COURSE} style={{ textDecoration: 'none' }}>
+                        <div className="d-flex align-items-center wl-gap-10" style={{ cursor: 'pointer' }}>
+                            <div style={{
+                                width: '40px',
+                                height: '40px',
+                                backgroundColor: '#003D7A',
+                                borderRadius: '8px',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center'
+                            }}>
+                                <svg width="24" height="24" viewBox="0 0 80 80" fill="none"
+                                     xmlns="http://www.w3.org/2000/svg">
+                                    <path
+                                        d="M58.8401 37.844C59.1981 37.6861 59.502 37.4266 59.7139 37.0976C59.9259 36.7687 60.0368 36.3848 60.0327 35.9935C60.0287 35.6022 59.9099 35.2207 59.6912 34.8962C59.4724 34.5717 59.1633 34.3185 58.8021 34.168L41.6601 26.36C41.139 26.1223 40.5729 25.9993 40.0001 25.9993C39.4273 25.9993 38.8612 26.1223 38.3401 26.36L21.2001 34.16C20.844 34.316 20.5411 34.5723 20.3284 34.8976C20.1157 35.223 20.0024 35.6033 20.0024 35.992C20.0024 36.3807 20.1157 36.761 20.3284 37.0864C20.5411 37.4117 20.844 37.6681 21.2001 37.824L38.3401 45.64C38.8612 45.8777 39.4273 46.0007 40.0001 46.0007C40.5729 46.0007 41.139 45.8777 41.6601 45.64L58.8401 37.844Z"
+                                        stroke="white" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round"/>
+                                    <path d="M60 36V48" stroke="white" strokeWidth="4" strokeLinecap="round"
+                                          strokeLinejoin="round"/>
+                                    <path
+                                        d="M28 41V48C28 49.5913 29.2643 51.1174 31.5147 52.2426C33.7652 53.3679 36.8174 54 40 54C43.1826 54 46.2348 53.3679 48.4853 52.2426C50.7357 51.1174 52 49.5913 52 48V41"
+                                        stroke="white" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round"/>
+                                </svg>
+                            </div>
 
-                        <div className="d-flex flex-column">
-                            <span style={{fontSize: '16px', fontWeight: '600', color: '#003D7A'}}>PPCBank</span>
-                            <span style={{fontSize: '12px', color: '#6B7280'}}>E-Learning</span>
-                        </div>
+                            <div className="d-flex flex-column">
+                                <span style={{fontSize: '16px', fontWeight: '600', color: '#003D7A'}}>PPCBank</span>
+                                <span style={{fontSize: '12px', color: '#6B7280'}}>E-Learning</span>
+                            </div>
 
-                    </div>
+                        </div>
+                    </Link>
                 </div>
                 <div className="wl-sidebar-collapse-wrapper accordion" id="SidebarMenuWrapperId">
                     <ul className="wl-sidebar-menu-container">

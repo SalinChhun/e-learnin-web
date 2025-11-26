@@ -1,23 +1,18 @@
 'use client'
 
 import Image from "next/image";
-import { Spinner } from 'react-bootstrap';
-import { useEnrollCourse, useCheckEnrollment } from '@/lib/hook/use-course';
-import usePermissions from '@/lib/hook/usePermissions';
+import {Spinner} from 'react-bootstrap';
+import {useCheckEnrollment, useEnrollCourse} from '@/lib/hook/use-course';
 
 interface CourseEnrollButtonProps {
     courseId: string | number | null | undefined;
+    enrollmentStatus: boolean;
 }
 
-export default function CourseEnrollButton({ courseId }: CourseEnrollButtonProps) {
+export default function CourseEnrollButton({ courseId, enrollmentStatus }: CourseEnrollButtonProps) {
     const { mutation: enrollMutation, isPending: isEnrolling } = useEnrollCourse()
-    const { enrollmentStatus, isLoading: isLoadingEnrollment, refetch: refetchEnrollment } = useCheckEnrollment(courseId)
-    const isEnrolled = enrollmentStatus?.is_enrolled || false
-    
-    // Don't show button while checking enrollment status
-    if (isLoadingEnrollment) {
-        return null
-    }
+    const isEnrolled = enrollmentStatus;
+
     
     const handleEnroll = () => {
         if (!courseId) return
@@ -32,7 +27,7 @@ export default function CourseEnrollButton({ courseId }: CourseEnrollButtonProps
             },
             {
                 onSuccess: () => {
-                    refetchEnrollment()
+                    // refetchEnrollment()
                 }
             }
         )

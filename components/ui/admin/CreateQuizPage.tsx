@@ -102,7 +102,7 @@ export default function CreateQuizPage() {
 
         createQuizMutation(quizData, questions, {
             onSuccess: () => {
-                router.push('/admin-management')
+                router.push('/admin-management/all-quiz')
             },
             onError: () => {
                 setActionType(null)

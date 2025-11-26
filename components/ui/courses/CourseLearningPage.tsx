@@ -9,6 +9,7 @@ import React from "react";
 import CourseHeaderCard from '@/components/shared/CourseHeaderCard';
 import TimeSpentCounter from '@/components/shared/TimeSpentCounter';
 import FinalAssessmentSection from './FinalAssessmentSection';
+import CourseVideoPlayer from '@/components/shared/CourseVideoPlayer';
 import dayjs from 'dayjs';
 
 interface CourseLearningPageProps {
@@ -105,108 +106,7 @@ export default function CourseLearningPage({ courseId }: CourseLearningPageProps
             />
 
             {/* Video Player Section */}
-            <div
-                style={{
-                    backgroundColor: '#000000',
-                    borderRadius: '12px',
-                    marginBottom: '24px',
-                    position: 'relative',
-                    paddingTop: '56.25%', // 16:9 aspect ratio
-                    overflow: 'hidden'
-                }}
-            >
-                <div
-                    style={{
-                        position: 'absolute',
-                        top: 0,
-                        left: 0,
-                        right: 0,
-                        bottom: 0,
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        cursor: 'pointer'
-                    }}
-                    onClick={() => {
-                        // Handle video play
-                        console.log('Play video')
-                    }}
-                >
-                    {/* Play Button */}
-                    <div
-                        style={{
-                            width: '80px',
-                            height: '80px',
-                            backgroundColor: 'rgba(255, 255, 255, 0.9)',
-                            borderRadius: '50%',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            transition: 'transform 0.2s'
-                        }}
-                        onMouseEnter={(e) => {
-                            e.currentTarget.style.transform = 'scale(1.1)'
-                        }}
-                        onMouseLeave={(e) => {
-                            e.currentTarget.style.transform = 'scale(1)'
-                        }}
-                    >
-                        <svg width="32" height="32" viewBox="0 0 24 24" fill="#003D7A">
-                            <path d="M8 5v14l11-7z" />
-                        </svg>
-                    </div>
-                </div>
-
-                {/* Video Controls */}
-                <div
-                    style={{
-                        position: 'absolute',
-                        bottom: 0,
-                        left: 0,
-                        right: 0,
-                        backgroundColor: 'rgba(0, 0, 0, 0.7)',
-                        padding: '12px 16px',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '12px'
-                    }}
-                >
-                    <button
-                        type="button"
-                        style={{
-                            background: 'none',
-                            border: 'none',
-                            color: 'white',
-                            cursor: 'pointer',
-                            padding: '4px'
-                        }}
-                    >
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="white">
-                            <path d="M8 5v14l11-7z" />
-                        </svg>
-                    </button>
-                    <div style={{ flex: 1, height: '4px', backgroundColor: 'rgba(255, 255, 255, 0.3)', borderRadius: '2px' }}>
-                        <div style={{ width: '0%', height: '100%', backgroundColor: '#003D7A', borderRadius: '2px' }} />
-                    </div>
-                    <span style={{ color: 'white', fontSize: '12px', minWidth: '80px', textAlign: 'right' }}>
-                        0:00 / 30 min
-                    </span>
-                    <button
-                        type="button"
-                        style={{
-                            background: 'none',
-                            border: 'none',
-                            color: 'white',
-                            cursor: 'pointer',
-                            padding: '4px'
-                        }}
-                    >
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="white">
-                            <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z" />
-                        </svg>
-                    </button>
-                </div>
-            </div>
+            <CourseVideoPlayer videoUrl={course.video_url} />
 
             {/* Course Content */}
             <div style={{

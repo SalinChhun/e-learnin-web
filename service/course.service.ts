@@ -41,6 +41,7 @@ interface CreateCourseRequest {
     due_date: string;
     is_public: boolean;
     image_url?: string;
+    video_url?: string;
     course_content: string;
     assignment_type: string;
     status: string;
@@ -209,6 +210,7 @@ interface MyCourse {
     enrolled_date: string;
     completed_date: string | null;
     image_url: string;
+    video_url?: string;
     total_score?: number | null;
     percentage_score?: number | null;
     course_content?: string;

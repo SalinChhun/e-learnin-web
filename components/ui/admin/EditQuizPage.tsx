@@ -134,7 +134,7 @@ export default function EditQuizPage() {
 
         updateQuizMutation(quizId, updateData, {
             onSuccess: () => {
-                router.push('/admin-management')
+                router.push('/admin-management/all-quiz')
             },
             onError: () => {
                 setActionType(null)
@@ -474,7 +474,7 @@ export default function EditQuizPage() {
                 <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px' }}>
                     <button
                         type="button"
-                        onClick={() => router.push('/admin-management')}
+                        onClick={() => router.push('/admin-management/all-quiz')}
                         style={{
                             padding: '10px 20px',
                             backgroundColor: 'transparent',

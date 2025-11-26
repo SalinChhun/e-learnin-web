@@ -19,7 +19,10 @@ interface Course {
     status: string;
     is_public: boolean;
     image_url: string;
+    video_url?: string;
+    course_content?: string;
     learner_count: number;
+    enrollment_status: number;
     created_at: string;
     updated_at: string;
 }
@@ -548,6 +551,7 @@ const useEnrollCourse = () => {
                     queryClient.invalidateQueries({ queryKey: ['public-courses'] });
                     queryClient.invalidateQueries({ queryKey: ['enrollment-status'] });
                     queryClient.invalidateQueries({ queryKey: ['all-enrollments'] });
+                    queryClient.invalidateQueries({ queryKey: ['course-details'] });
                     options?.onSuccess?.(data);
                 },
                 onError: (error: any) => {

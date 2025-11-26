@@ -72,6 +72,12 @@ export const createCourseSchema = z.object({
     .string()
     .optional()
     .default(''),
+
+  videoUrl: z
+    .string()
+    // .url('Video URL must be a valid URL')
+    .optional()
+    .default(''),
 }).refine(
   (data) => {
     // If enableCertificate is true, certificateTemplate must be provided

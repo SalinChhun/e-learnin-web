@@ -13,6 +13,9 @@ import SelectAssignees from '@/components/shared/SelectAssignees'
 import SingleDatePicker from '@/components/shared/SingleDatePicker'
 import { useCreateCourse, useFetchCertificateTemplates } from '@/lib/hook/use-course'
 import { createCourseSchema, CreateCourseOutput } from '@/validators/course.schema'
+import fileService from '@/service/file-upload.service'
+import toast from '@/utils/toastService'
+import CourseVideoUpload from '@/components/shared/CourseVideoUpload'
 
 export default function CreateCoursePage() {
     const router = useRouter()
@@ -20,6 +23,9 @@ export default function CreateCoursePage() {
     const { templates: certificateTemplates, isLoading: isLoadingTemplates } = useFetchCertificateTemplates('2')
     console.log('certificateTemplates', certificateTemplates)
     const [actionType, setActionType] = useState<'draft' | 'publish' | null>(null)
+    const [isUploadingVideo, setIsUploadingVideo] = useState(false)
+    const [videoPreview, setVideoPreview] = useState<string | null>(null)
+    const [selectedVideoFile, setSelectedVideoFile] = useState<File | null>(null)
     
     const {
         register,
@@ -42,7 +48,8 @@ export default function CreateCoursePage() {
             selectedAssignees: [],
             enableCertificate: false,
             certificateTemplate: '',
-            courseContent: ''
+            courseContent: '',
+            videoUrl: ''
         },
     })
 
@@ -77,8 +84,75 @@ export default function CreateCoursePage() {
         return { days: 4, hours: 8 }
     }
 
-    const onSubmit = (data: CreateCourseOutput, isDraft: boolean) => {
+    const uploadVideoFile = async (file: File): Promise<string | null> => {
+        setIsUploadingVideo(true)
+        try {
+            const response = await fileService.uploadVideo(file)
+            // Try multiple possible response structures
+            const videoUrl = response?.data?.data?.video_url || 
+                           response?.data?.data?.url || 
+                           response?.data?.video_url || 
+                           response?.data?.url || 
+                           ''
+            
+            if (videoUrl) {
+                return videoUrl
+            } else {
+                console.error('Upload response:', response)
+                toast.error('Failed to get video URL from upload response')
+                return null
+            }
+        } catch (error: any) {
+            console.error('Video upload error:', error)
+            toast.error(error?.response?.data?.message || error?.message || 'Failed to upload video')
+            return null
+        } finally {
+            setIsUploadingVideo(false)
+        }
+    }
+
+    const handleVideoFileChange = (file: File | null) => {
+        if (file) {
+            // Store the file and create preview
+            setSelectedVideoFile(file)
+            setValue('videoUrl', '', { shouldValidate: true }) // Clear any existing URL
+            
+            // Create preview from file
+            const reader = new FileReader()
+            reader.onloadend = () => {
+                setVideoPreview(reader.result as string)
+            }
+            reader.readAsDataURL(file)
+        }
+    }
+
+    const handleRemoveVideo = () => {
+        setSelectedVideoFile(null)
+        setVideoPreview(null)
+        setValue('videoUrl', '', { shouldValidate: true })
+        // Reset file input
+        const fileInput = document.querySelector('input[type="file"][accept*="video"]') as HTMLInputElement
+        if (fileInput) {
+            fileInput.value = ''
+        }
+    }
+
+    const onSubmit = async (data: CreateCourseOutput, isDraft: boolean) => {
         setActionType(isDraft ? 'draft' : 'publish')
+
+        let videoUrl = data.videoUrl || undefined
+
+        // Upload video if a file is selected
+        if (selectedVideoFile) {
+            const uploadedUrl = await uploadVideoFile(selectedVideoFile)
+            if (uploadedUrl) {
+                videoUrl = uploadedUrl
+            } else {
+                // If upload failed, stop the submission
+                setActionType(null)
+                return
+            }
+        }
 
         const { days, hours } = parseDuration(data.duration)
         const assignmentTypeCode = data.assignmentType === 'Individual' ? '01' : '02'
@@ -104,6 +178,7 @@ export default function CreateCoursePage() {
             due_date: data.endDate,
             is_public: !isDraft, // Draft is not public, published courses are public
             image_url: '', // Can be added later if needed
+            video_url: videoUrl,
             course_content: data.courseContent || '',
             assignment_type: assignmentTypeCode,
             status: isDraft ? '1' : '2', // 1 = draft, 2 = published
@@ -115,7 +190,7 @@ export default function CreateCoursePage() {
         createCourseMutation(courseData, {
             isDraft,
             onSuccess: () => {
-                router.push('/admin-management')
+                router.push('/admin-management/all-course')
             },
             onError: () => {
                 setActionType(null)
@@ -352,6 +427,16 @@ export default function CreateCoursePage() {
                 </div>
             </div>
 
+            {/* Course Video Section */}
+            <CourseVideoUpload
+                videoPreview={videoPreview}
+                isUploadingVideo={isUploadingVideo}
+                isCreating={isCreating}
+                errors={errors.videoUrl}
+                onVideoFileChange={handleVideoFileChange}
+                onRemoveVideo={handleRemoveVideo}
+            />
+
             {/* Course Content Section */}
             <div style={{ 
                 backgroundColor: 'white', 
@@ -522,7 +607,7 @@ export default function CreateCoursePage() {
                 <button
                     type="button"
                     onClick={handleSaveDraft}
-                    disabled={isCreating}
+                    disabled={isCreating || isUploadingVideo}
                     style={{
                         padding: '12px 24px',
                         backgroundColor: 'white',
@@ -531,31 +616,33 @@ export default function CreateCoursePage() {
                         borderRadius: '8px',
                         fontSize: '14px',
                         fontWeight: '500',
-                        cursor: isCreating ? 'not-allowed' : 'pointer',
+                        cursor: (isCreating || isUploadingVideo) ? 'not-allowed' : 'pointer',
                         transition: 'background-color 0.2s',
-                        opacity: isCreating ? 0.6 : 1,
+                        opacity: (isCreating || isUploadingVideo) ? 0.6 : 1,
                         display: 'flex',
                         alignItems: 'center',
                         gap: '8px'
                     }}
                     onMouseEnter={(e) => {
-                        if (!isCreating) {
+                        if (!isCreating && !isUploadingVideo) {
                             e.currentTarget.style.backgroundColor = '#F9FAFB'
                         }
                     }}
                     onMouseLeave={(e) => {
-                        if (!isCreating) {
+                        if (!isCreating && !isUploadingVideo) {
                             e.currentTarget.style.backgroundColor = 'white'
                         }
                     }}
                 >
-                    {isCreating && actionType === 'draft' && <Spinner animation="border" size="sm" style={{ width: 14, height: 14 }} />}
-                    Save as Draft
+                    {(isCreating && actionType === 'draft') || isUploadingVideo ? (
+                        <Spinner animation="border" size="sm" style={{ width: 14, height: 14 }} />
+                    ) : null}
+                    {isUploadingVideo ? 'Uploading video...' : 'Save as Draft'}
                 </button>
                 <button
                     type="button"
                     onClick={handlePublish}
-                    disabled={isCreating}
+                    disabled={isCreating || isUploadingVideo}
                     style={{
                         padding: '12px 24px',
                         backgroundColor: '#003D7A',
@@ -564,26 +651,28 @@ export default function CreateCoursePage() {
                         borderRadius: '8px',
                         fontSize: '14px',
                         fontWeight: '500',
-                        cursor: isCreating ? 'not-allowed' : 'pointer',
+                        cursor: (isCreating || isUploadingVideo) ? 'not-allowed' : 'pointer',
                         transition: 'background-color 0.2s',
-                        opacity: isCreating ? 0.6 : 1,
+                        opacity: (isCreating || isUploadingVideo) ? 0.6 : 1,
                         display: 'flex',
                         alignItems: 'center',
                         gap: '8px'
                     }}
                     onMouseEnter={(e) => {
-                        if (!isCreating) {
+                        if (!isCreating && !isUploadingVideo) {
                             e.currentTarget.style.backgroundColor = '#002855'
                         }
                     }}
                     onMouseLeave={(e) => {
-                        if (!isCreating) {
+                        if (!isCreating && !isUploadingVideo) {
                             e.currentTarget.style.backgroundColor = '#003D7A'
                         }
                     }}
                 >
-                    {isCreating && actionType === 'publish' && <Spinner animation="border" size="sm" style={{ width: 14, height: 14 }} />}
-                    Publish Course
+                    {(isCreating && actionType === 'publish') || isUploadingVideo ? (
+                        <Spinner animation="border" size="sm" style={{ width: 14, height: 14 }} />
+                    ) : null}
+                    {isUploadingVideo ? 'Uploading video...' : 'Publish Course'}
                 </button>
             </div>
         </div>
